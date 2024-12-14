@@ -240,8 +240,8 @@ SkinnedMeshRenderer:
   m_BlendShapeWeights: []
   m_RootBone: {fileID: 4136905727899480064}
   m_AABB:
-    m_Center: {x: -0.49999982, y: 0, z: 0.5000001}
-    m_Extent: {x: 0.2999999, y: 0.1, z: 0.10000029}
+    m_Center: {x: 0, y: 0, z: 0.2}
+    m_Extent: {x: 0.15, y: 0.56, z: 0.5}
   m_DirtyAABB: 0
 --- !u!1 &627261602766105754
 GameObject:
@@ -561,28 +561,28 @@ CharacterJoint:
   m_Anchor: {x: 0, y: 0, z: 0}
   m_Axis: {x: 0, y: 0, z: 1}
   m_AutoConfigureConnectedAnchor: 0
-  m_ConnectedAnchor: {x: -0.00000005066396, y: 0.3000001, z: 0.00000005960464}
-  m_SwingAxis: {x: -1, y: 0, z: 0}
+  m_ConnectedAnchor: {x: -0.00000004696059, y: 0.3000001, z: 0.000000006771295}
+  m_SwingAxis: {x: 0, y: 0, z: 0}
   m_TwistLimitSpring:
     spring: 0
     damper: 0
   m_LowTwistLimit:
-    limit: -90
+    limit: -40
     bounciness: 0
     contactDistance: 0
   m_HighTwistLimit:
-    limit: 70
+    limit: 40
     bounciness: 0
     contactDistance: 0
   m_SwingLimitSpring:
     spring: 0
     damper: 0
   m_Swing1Limit:
-    limit: 45
+    limit: 90
     bounciness: 0
     contactDistance: 0
   m_Swing2Limit:
-    limit: 0
+    limit: 40
     bounciness: 0
     contactDistance: 0
   m_EnableProjection: 0
@@ -2215,19 +2215,19 @@ CharacterJoint:
   m_ConnectedBody: {fileID: 6096993258673660780}
   m_ConnectedArticulationBody: {fileID: 0}
   m_Anchor: {x: 0, y: 0, z: 0}
-  m_Axis: {x: 0, y: 0, z: 1}
+  m_Axis: {x: 0, y: 0, z: -1}
   m_AutoConfigureConnectedAnchor: 0
-  m_ConnectedAnchor: {x: 0.00000005734759, y: 0.00000007748604, z: 0.3000002}
-  m_SwingAxis: {x: -1, y: 0, z: 0}
+  m_ConnectedAnchor: {x: 0.00000005734759, y: 0.00000005960464, z: 0.3000002}
+  m_SwingAxis: {x: 1, y: 0, z: 0}
   m_TwistLimitSpring:
     spring: 0
     damper: 0
   m_LowTwistLimit:
-    limit: -45
+    limit: -10
     bounciness: 0
     contactDistance: 0
   m_HighTwistLimit:
-    limit: 10
+    limit: 20
     bounciness: 0
     contactDistance: 0
   m_SwingLimitSpring:
@@ -2238,7 +2238,7 @@ CharacterJoint:
     bounciness: 0
     contactDistance: 0
   m_Swing2Limit:
-    limit: 0
+    limit: 45
     bounciness: 0
     contactDistance: 0
   m_EnableProjection: 0
@@ -2399,8 +2399,8 @@ SkinnedMeshRenderer:
   m_BlendShapeWeights: []
   m_RootBone: {fileID: 4136905727899480064}
   m_AABB:
-    m_Center: {x: 0.4999998, y: -0.000000067055225, z: 0.49999997}
-    m_Extent: {x: 0.29999998, y: 0.10000025, z: 0.10000011}
+    m_Center: {x: 0, y: 0, z: 0.2}
+    m_Extent: {x: 0.15, y: 0.56, z: 0.5}
   m_DirtyAABB: 0
 --- !u!1 &9141027249102464749
 GameObject:
