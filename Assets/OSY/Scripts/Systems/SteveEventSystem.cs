@@ -1,6 +1,9 @@
 using Cysharp.Threading.Tasks;
 using OSY;
+using Rukhanka;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
@@ -10,8 +13,11 @@ using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Aspects;
 using Unity.Transforms;
+using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using WebSocketSharp;
+using static UnityEngine.EventSystems.EventTrigger;
 
 public partial class SteveEventSystem : SystemBase
 {
@@ -26,8 +32,13 @@ public partial class SteveEventSystem : SystemBase
 
     public const string stringL = "l";
     public const string stringLoop = "loop";
+    public const string stringLS = "ls";
+    public const string stringLoopStop = "loopstop";
+    public const string stringLSA = "lsa";
+    public const string stringLoopStopAll = "loopstopall";
 
-    public bool isDanceTime;
+    public const string stringReset = "reset";
+
     public const string stringDT = "dt";
     public const string stringDanceTime = "dancetime";
     CancellationTokenSource danceCTS;
@@ -58,6 +69,8 @@ public partial class SteveEventSystem : SystemBase
     BlobAssetReference<DonationConfig> donationConfig;
     TimeData timeData;
 
+    Dictionary<FixedString64Bytes, CancellationTokenSource> loopCommands = new Dictionary<FixedString64Bytes, CancellationTokenSource>();
+
     protected override void OnCreate()
     {
         base.OnCreate();
@@ -66,7 +79,6 @@ public partial class SteveEventSystem : SystemBase
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-        danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
         steveConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
         donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;
         timeData = SystemAPI.Time;
@@ -75,36 +87,36 @@ public partial class SteveEventSystem : SystemBase
         {
             EntityStoreComponent store = SystemAPI.GetSingleton<EntityStoreComponent>();
             //GameManager.SpawnOrder spawnOrder = GameManager.instance.spawnOrderQueue.Dequeue();
-            Entity spawnedSteve = EntityManager.Instantiate(store.steve);
-            var steveComponent = EntityManager.GetComponentData<SteveComponent>(spawnedSteve);
+            Entity spawnedPlayer = EntityManager.Instantiate(store.steve);
+            var playerComponent = EntityManager.GetComponentData<PlayerComponent>(spawnedPlayer);
             //var hash = EntityManager.GetComponentData<HashIDComponent>(spawnedSteve);
             //var velocity = EntityManager.GetComponentData<PhysicsVelocity>(spawnedSteve);
-            var localTransform = EntityManager.GetComponentData<LocalTransform>(spawnedSteve);
-            var spawnPosition = GameManager.instance.spawnTransform.position;
+            var localTransform = EntityManager.GetComponentData<LocalTransform>(spawnedPlayer);
 
-            steveComponent.currentState = SteveState.Ragdoll;
-            steveComponent.userName = username;
+            playerComponent.currentState = SteveState.Ragdoll;
+            playerComponent.userName = username;
             //hash.ID = spawnOrder.hash;
             //velocity.Linear = spawnOrder.initForce;
             //localTransform.Scale = 1;
-            localTransform.Position = spawnPosition;
+            localTransform.Position = GameManager.instance.spawnTransform.position;
 
             /*EntityManager.AddComponentData(spawnedSteve, new TimeLimitedLifeComponent
             {
                 lifeTime = steveConfig.Value.DefalutLifeTime
             });*/
-            EntityManager.SetComponentData(spawnedSteve, steveComponent);
+            EntityManager.SetComponentData(spawnedPlayer, playerComponent);
             //EntityManager.SetComponentData(spawnedSteve, hash);
             //EntityManager.SetComponentData(spawnedSteve, velocity);
-            EntityManager.SetComponentData(spawnedSteve, localTransform);
+            EntityManager.SetComponentData(spawnedPlayer, localTransform);
 
+            new SteveInitJob { targetPlayerEntity = spawnedPlayer, userName = username, parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged).AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
         };
         OnChat = async (userName, text, addValueLife) =>
         {
-            NativeReference<Entity> tempSteveRef = new NativeReference<Entity>(Allocator.TempJob);
-            new GetSteveJob { name = userName, targetSteve = tempSteveRef }.Schedule(CheckedStateRef.Dependency).Complete();
-            Entity ownerSteveEntity = tempSteveRef.Value;
-            tempSteveRef.Dispose();
+            NativeReference<Entity> tempPlayerRef = new NativeReference<Entity>(Allocator.TempJob);
+            new GetPlayerEntityJob { name = userName, playerRef = tempPlayerRef }.Schedule(CheckedStateRef.Dependency).Complete();
+            Entity ownerSteveEntity = tempPlayerRef.Value;
+            tempPlayerRef.Dispose();
             try
             {
                 Debug.Log(text);
@@ -112,9 +124,9 @@ public partial class SteveEventSystem : SystemBase
                 if (text.Contains(commandSplitter))
                 {
                     string[] commandLines = text.Split(commandSplitter);
-                    for (int i = 1; i < commandLines.Length; i++)
+                    for (int commandLineIndex = 1; commandLineIndex < commandLines.Length; commandLineIndex++)
                     {
-                        string[] commands = commandLines[i].Split(Utils.stringSpace);
+                        string[] commands = commandLines[commandLineIndex].Split(Utils.stringSpace);
 
                         SteveBodyPart part;
                         switch (commands[0].ToLower())
@@ -126,39 +138,105 @@ public partial class SteveEventSystem : SystemBase
 
                             case stringDT:
                             case stringDanceTime:
-
-                                if (isDanceTime)
+                                if(userName != stringBonoBono) break;
+                                if (danceCTS != null && !danceCTS.IsCancellationRequested)
                                 {
                                     danceCTS?.Cancel();
-                                    danceCTS?.Dispose();
-                                    await UniTask.Yield();
-                                    danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
                                 }
-                                isDanceTime = true;
+                                danceCTS?.Dispose();
+
+                                await UniTask.Yield();
+                                await UniTask.Yield();
 
                                 float limitSec = float.Parse(commands[1]);
 
+                                danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+
                                 UniTask.RunOnThreadPool(async () =>
                                 {
+                                    await UniTask.SwitchToMainThread();
                                     try
                                     {
                                         for (float timer = 0; limitSec == -1 || timer <= limitSec; timer += 0.5f)
                                         {
                                             if (danceCTS.IsCancellationRequested) return;
-                                            new StevePopupJob().ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                            CheckedStateRef.Dependency = new StevePopupJob().ScheduleParallel(CheckedStateRef.Dependency);
+                                            CheckedStateRef.Dependency.Complete();
+                                            if (danceCTS.IsCancellationRequested) return;
                                             await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
                                             if (danceCTS.IsCancellationRequested) return;
                                         }
                                     }
                                     finally
                                     {
-                                        isDanceTime = false;
+                                        danceCTS?.Cancel();
                                     }
                                 }, true, danceCTS.Token).Forget();
                                 break;
+
+                            case stringL:
+                            case stringLoop:
+                                FixedString64Bytes commandName1 = commands[1];
+                                FixedString64Bytes commandKey1 = $"{userName}!:{commandName1}";
+                                if (loopCommands.ContainsKey(commandKey1)) break;
+                                var loopCommandCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+
+                                Debug.Log($"루프명: {commandKey1}\r\n횟수: {commands[2]}, 간격: {commands[3]}");
+                                int maxCount = int.Parse(commands[2]);
+                                float delay = float.Parse(commands[3]);
+                                string remainCommands = commandSplitter + string.Join(commandSplitter, commandLines.SubArray(2, commandLines.Length - 2));
+                                int loopEndIndex = remainCommands.IndexOf('}');
+                                string targetCommands = remainCommands.Substring(0, loopEndIndex);
+                                commandLines = remainCommands.Substring(loopEndIndex).Split(commandSplitter);
+                                commandLineIndex = 0;
+                                loopCommands.TryAdd(commandKey1, loopCommandCTS);
+
+                                UniTask.RunOnThreadPool(async () =>
+                                {
+                                    await UniTask.Yield();
+                                    try
+                                    {
+                                        for (int count = 0; maxCount == -1 || count < maxCount; count++)
+                                        {
+                                            if (loopCommandCTS.IsCancellationRequested) return;
+                                            OnChat(userName, targetCommands, addValueLife);
+                                            await UniTask.Delay(TimeSpan.FromSeconds(delay));
+                                            if (loopCommandCTS.IsCancellationRequested) return;
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        loopCommands.Remove(commandKey1);
+                                    }
+                                },true, loopCommandCTS.Token).Forget();
+                                break;
+
+                            case stringLS:
+                            case stringLoopStop:
+                                FixedString64Bytes commandName2 = commands[1];
+                                FixedString64Bytes commandKey2 = $"{userName}!:{commandName2}";
+                                if (!loopCommands.ContainsKey(commandKey2)) return;
+                                loopCommands[commandKey2]?.Cancel();
+                                loopCommands[commandKey2]?.Dispose();
+                                loopCommands.Remove(commandKey2);
+                                break;
+
+                            case stringLSA:
+                            case stringLoopStopAll:
+                                foreach (var CTS in loopCommands.Values)
+                                {
+                                    CTS?.Cancel();
+                                    CTS?.Dispose();
+                                }
+                                loopCommands.Clear();
+                                break;
+
+                            case stringReset:
+                                new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = ownerSteveEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                break;
+
                             case stringP:
                             case stringPush:
-
                                 switch (commands[1].ToLower())
                                 {
                                     case stringHead:
@@ -186,7 +264,8 @@ public partial class SteveEventSystem : SystemBase
                                 }
                                 float3 force = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
 
-                                new SteveBodyPartPushJob { targetPart = part, force = force, targetEntity = ownerSteveEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                CheckedStateRef.Dependency = new BodyPartsPushJob { targetPart = part, force = force, targetEntity = ownerSteveEntity }.ScheduleParallel(CheckedStateRef.Dependency);
+                                CheckedStateRef.Dependency.Complete();
                                 break;
                         }
                     }
@@ -244,56 +323,68 @@ public partial class SteveEventSystem : SystemBase
     protected override void OnUpdate()
     {
     }
+    partial struct SteveInitJob : IJobEntity
+    {
+        [ReadOnly] public FixedString64Bytes userName;
+        [ReadOnly] public Entity targetPlayerEntity;
+        public EntityCommandBuffer.ParallelWriter parallelWriter;
+        public void Execute([ChunkIndexInQuery] int chunkIndex, Entity entity, BodyPartComponent bodyPart)
+        {
+            if (bodyPart.ownerEntity == default) return;
+            if (bodyPart.partType == SteveBodyPart.Head && bodyPart.ownerEntity == targetPlayerEntity)
+                parallelWriter.AddComponent<NameTagComponent>(chunkIndex, entity, new NameTagComponent { name = userName });
+
+        }
+    }
 
     partial struct StevePopupJob : IJobEntity
     {
-        public void Execute([ChunkIndexInQuery] int chunkIndex, BodyPartComponent bodyPart, RigidBodyAspect rigidBodyAspect)
+        public void Execute(BodyPartComponent bodyPart, RigidBodyAspect rigidBodyAspect)
         {
             switch (bodyPart.partType)
             {
                 case SteveBodyPart.RightHand:
                 case SteveBodyPart.LeftHand:
-                case SteveBodyPart.Head:
-                    rigidBodyAspect.LinearVelocity += new float3(0, 3, 0);
+                    rigidBodyAspect.LinearVelocity += new float3(0, 10, 0);
                     break;
             }
         }
     }
     [BurstCompile]
-    partial struct GetSteveJob : IJobEntity
+    partial struct GetPlayerEntityJob : IJobEntity
     {
         [ReadOnly] public FixedString64Bytes name;
-        public NativeReference<Entity> targetSteve;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, Entity entity, SteveComponent steve)
+        public NativeReference<Entity> playerRef;
+        public void Execute(Entity entity, PlayerComponent playerComponent)
         {
-            if (steve.userName == name)
-                targetSteve.Value = entity;
+            if (playerComponent.userName == name)
+                playerRef.Value = entity;
         }
     }
     [BurstCompile]
-    partial struct SteveBodyPartPushJob : IJobEntity
+    partial struct PlayerResetJob : IJobEntity
+    {
+        [ReadOnly] public Entity targetEntity;
+        [ReadOnly] public float3 spawnPoint;
+        public void Execute(BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
+        {
+            if (bodyPartComponent.ownerEntity == targetEntity)
+            {
+                rigidBodyAspect.Position = spawnPoint;
+                rigidBodyAspect.LinearVelocity *= 0;
+            }
+        }
+    }
+    [BurstCompile]
+    partial struct BodyPartsPushJob : IJobEntity
     {
         [ReadOnly] public Entity targetEntity;
         [ReadOnly] public SteveBodyPart targetPart;
         [ReadOnly] public float3 force;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
+        public void Execute(in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
         {
             if(bodyPartComponent.ownerEntity == targetEntity && bodyPartComponent.partType == targetPart)
                 rigidBodyAspect.LinearVelocity += force;
-        }
-    }
-
-    [BurstCompile]
-    partial struct OnChatTestJob : IJobEntity
-    {
-        [ReadOnly] public int hashID;
-        [ReadOnly] public float addValue;
-        [ReadOnly] public SteveConfig peepoConfig;
-        public void Execute(ref TimeLimitedLifeComponent timeLimitedLifeComponent, in HashIDComponent hash)
-        {
-            //Debug.Log("채팅");
-            if (hash.ID == hashID)
-                timeLimitedLifeComponent.lifeTime = math.clamp(timeLimitedLifeComponent.lifeTime + addValue, 0, peepoConfig.MaxLifeTime);
         }
     }
     [BurstCompile]
@@ -317,11 +408,11 @@ public partial class SteveEventSystem : SystemBase
         [ReadOnly] public Entity spawnObject;
         [ReadOnly] public DonationConfig donationConfig;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in LocalTransform peepoLocalTransform, ref RandomDataComponent randomDataComponent, ref SteveComponent peepoComponent, in HashIDComponent hash)
+        public void Execute([ChunkIndexInQuery] int chunkIndex, in LocalTransform peepoLocalTransform, ref RandomDataComponent randomDataComponent, ref PlayerComponent playerComponent, in HashIDComponent hash)
         {
             if (hash.ID == hashID)
             {
-                peepoComponent.currentState = SteveState.Ragdoll;
+                playerComponent.currentState = SteveState.Ragdoll;
                 Entity spawnedCheeze = parallelWriter.Instantiate(chunkIndex, spawnObject);
                 randomDataComponent.Random = new Unity.Mathematics.Random(randomDataComponent.Random.NextUInt(uint.MinValue, uint.MaxValue));
                 var initTransform = new LocalTransform { Position = peepoLocalTransform.Position, Rotation = quaternion.identity, Scale = randomDataComponent.Random.NextFloat(donationConfig.MinSize, donationConfig.MaxSize) };
@@ -363,7 +454,7 @@ public partial class SteveEventSystem : SystemBase
         [ReadOnly] public int hashID;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
 
-        public void Execute([ChunkIndexInQuery] int chunkIndex, Entity entity, ref TimeLimitedLifeComponent timeLimitedLifeComponent, in HashIDComponent hash)
+        public void Execute(Entity entity, ref TimeLimitedLifeComponent timeLimitedLifeComponent, in HashIDComponent hash)
         {
             if (hash.ID == hashID)
             {

@@ -97,9 +97,9 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
                 material.RestitutionCombinePolicy = Material.CombinePolicy.Minimum;
                 Utils.SetMaterial(gameManagerRW.dragingEntityInfo.rigidbody, material, raycastHit.ColliderKey);
             }
-            if (entityManager.HasComponent<SteveComponent>(hitEntity))
+            if (entityManager.HasComponent<PlayerComponent>(hitEntity))
             {
-                SteveComponent peepoComponent = entityManager.GetComponentData<SteveComponent>(hitEntity);
+                PlayerComponent peepoComponent = entityManager.GetComponentData<PlayerComponent>(hitEntity);
                 peepoComponent.currentState = SteveState.Dragging;
                 entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, peepoComponent);
             }
@@ -131,9 +131,9 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
     {
         if (!isDraging) return;
         isDraging = false;
-        if (entityManager.HasComponent<SteveComponent>(gameManagerRW.dragingEntityInfo.entity))
+        if (entityManager.HasComponent<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity))
         {
-            SteveComponent peepoComponent = entityManager.GetComponentData<SteveComponent>(gameManagerRW.dragingEntityInfo.entity);
+            PlayerComponent peepoComponent = entityManager.GetComponentData<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity);
             peepoComponent.currentState = SteveState.Ragdoll;
             Utils.SetMaterial(gameManagerRW.dragingEntityInfo.rigidbody, gameManagerRW.dragingEntityInfo.material, gameManagerRW.dragingEntityInfo.colliderKey);
             entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, peepoComponent);

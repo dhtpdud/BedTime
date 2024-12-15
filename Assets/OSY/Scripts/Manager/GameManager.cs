@@ -3,6 +3,7 @@ using OSY;
 using System;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -175,10 +176,10 @@ public class GameManager : MonoBehaviour
     public TMP_InputField ErrorPOPUPText;
     //public RectTransform peepoSpawnRect;
 
-    /*[Header("GameObject Caches")]
-    public GameObject chatBubbles;
-    public GameObject chatBubble;
-    public GameObject nameTag;*/
+    [Header("GameObject Caches")]
+    /*public GameObject chatBubbles;
+    public GameObject chatBubble;*/
+    public GameObject nameTag;
 
     public Dictionary<int, BlobAssetReference<Unity.Physics.Collider>> blobAssetcolliders = new Dictionary<int, BlobAssetReference<Unity.Physics.Collider>>();
 
@@ -215,25 +216,25 @@ public class GameManager : MonoBehaviour
     }*/
     public class ViewerInfo
     {
-        public string userName;
+        public FixedString64Bytes userName;
         public int subscribeMonth;
         /*public GameObject chatBubbleObjects;
-        public List<ChatInfo> chatInfos;
-        public GameObject nameTagObject;*/
+        public List<ChatInfo> chatInfos;*/
+        public GameObject nameTagObject;
         public ViewerInfo(string nickName, int subscribeMonth = 0)
         {
             this.userName = nickName;
-            /*chatInfos = new List<ChatInfo>();
             this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
-            this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
-            var tmp = nameTagObject.GetComponentInChildren<TMP_Text>();*/
+            //chatInfos = new List<ChatInfo>();
+            //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
+            var tmp = nameTagObject.GetComponentInChildren<TMP_Text>();
 
             if (nickName.Contains(GameManager.instance.nameSpliter))
                 nickName = nickName.Split(GameManager.instance.nameSpliter)[1];
 
-            /*tmp.text = subscribeMonth > 0 ? $"{nickName}\n[{subscribeMonth}개월]" : nickName;
+            tmp.text = subscribeMonth > 0 ? $"{nickName}\n[{subscribeMonth}Month]" : nickName;
             //Debug.Log(nicknameColor.ToHexString());
-            tmp.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0) : Color.white;*/
+            tmp.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0) : Color.white;
         }
         /*public void OnDestroy()
         {
@@ -248,8 +249,7 @@ public class GameManager : MonoBehaviour
         }*/
     }
     //캐싱 변수
-    //public Dictionary<int, ViewerInfo> viewerInfos = new Dictionary<int, ViewerInfo>();
-    public List<ViewerInfo> viewerInfos = new List<ViewerInfo>();
+    public Dictionary<FixedString64Bytes, ViewerInfo> viewerInfos = new Dictionary<FixedString64Bytes, ViewerInfo>();
 
     /*public struct SpawnOrder
     {

@@ -1,0 +1,227 @@
+fileFormatVersion: 2
+guid: a413cf6d7f540d543a5c83d5bcd19851
+ModelImporter:
+  serializedVersion: 22200
+  internalIDToNameTable: []
+  externalObjects: {}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    removeConstantScaleCurves: 0
+    motionNodeName: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    importConstraints: 0
+    animationCompression: 3
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 0
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 25
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    sortHierarchyByName: 1
+    importPhysicalCameras: 1
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    nodeNameCollisionStrategy: 1
+    fileIdsGeneration: 2
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    keepQuads: 0
+    weldVertices: 1
+    bakeAxisConversion: 0
+    preserveHierarchy: 0
+    skinWeightsMode: 0
+    maxBonesPerVertex: 4
+    minBoneWeight: 0.001
+    optimizeBones: 1
+    meshOptimizationFlags: -1
+    indexFormat: 0
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVMarginMethod: 1
+    secondaryUVMinLightmapResolution: 40
+    secondaryUVMinObjectScale: 1
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+    strictVertexDataChecks: 0
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    blendShapeNormalImportMode: 1
+    normalSmoothingSource: 0
+  referencedClips: []
+  importAnimation: 0
+  humanDescription:
+    serializedVersion: 3
+    human: []
+    skeleton:
+    - name: Creeper2(Clone)
+      parentName: 
+      position: {x: 0, y: 0, z: 0}
+      rotation: {x: 0, y: 0, z: 0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Armature
+      parentName: Creeper2(Clone)
+      position: {x: -0, y: 0, z: -9.710829e-13}
+      rotation: {x: -0.7071069, y: 0, z: 0, w: 0.7071067}
+      scale: {x: 100, y: 100, z: 100}
+    - name: Root
+      parentName: Armature
+      position: {x: -0, y: 0, z: -0.000000059604645}
+      rotation: {x: 0.70710677, y: 4.647465e-16, z: 3.391404e-16, w: 0.7071068}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Spine
+      parentName: Root
+      position: {x: -0, y: 0.29999995, z: 9.473115e-16}
+      rotation: {x: -0, y: -0, z: -2.646978e-23, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Head
+      parentName: Spine
+      position: {x: -0, y: 0.6, z: -1.0658141e-14}
+      rotation: {x: -0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Head_end
+      parentName: Head
+      position: {x: -0, y: 0.19999993, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Pelvis_FL
+      parentName: Spine
+      position: {x: -1.8625602e-14, y: 0.00000005960465, z: 7.1054274e-15}
+      rotation: {x: -0.2705981, y: -0.27059814, z: 0.65328157, w: 0.6532814}
+      scale: {x: 1.0000001, y: 1.0000001, z: 1}
+    - name: FLLeg
+      parentName: Pelvis_FL
+      position: {x: 0.000000018174433, y: 0.14142135, z: 0.000000002692186}
+      rotation: {x: 0.6532814, y: -0.65328157, z: -0.27059814, w: -0.2705981}
+      scale: {x: 0.9999994, y: 1.0000025, z: 1.0000027}
+    - name: FLLeg_end
+      parentName: FLLeg
+      position: {x: -0, y: 0.3, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Pelvis_BL
+      parentName: Spine
+      position: {x: 1.8625602e-14, y: 0.00000005960465, z: 7.1054274e-15}
+      rotation: {x: -0.2705981, y: 0.27059814, z: -0.65328157, w: 0.6532814}
+      scale: {x: 1.0000001, y: 0.9999998, z: 1.0000001}
+    - name: BLLeg
+      parentName: Pelvis_BL
+      position: {x: -0.000000018174433, y: 0.14142135, z: 0.000000002692186}
+      rotation: {x: 0.6532814, y: 0.65328157, z: 0.27059814, w: -0.2705981}
+      scale: {x: 1.0000002, y: 1.0000033, z: 1.0000027}
+    - name: BLLeg_end
+      parentName: BLLeg
+      position: {x: -0, y: 0.3, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: Pelvis_FR
+      parentName: Spine
+      position: {x: 2.6645348e-15, y: 0.00000005960465, z: 1.4210855e-14}
+      rotation: {x: 0.702385, y: 0.70238525, z: 0.081579894, w: 0.081578724}
+      scale: {x: 1.0000002, y: 1.0000001, z: 1}
+    - name: FRLeg
+      parentName: Pelvis_FR
+      position: {x: -0.000000023791344, y: 0.14142142, z: -0.000000004758398}
+      rotation: {x: 0.059938625, y: -0.8679636, z: -0.09867252, w: 0.48302215}
+      scale: {x: 0.99999976, y: 0.9999997, z: 0.9999999}
+    - name: FRLeg_end
+      parentName: FRLeg
+      position: {x: -0, y: 0.3, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: PelvisBR
+      parentName: Spine
+      position: {x: -7.1054274e-15, y: 0.00000005960465, z: 7.1054274e-15}
+      rotation: {x: 0.70238525, y: -0.70238495, z: -0.08157909, w: 0.081579685}
+      scale: {x: 0.99999964, y: 0.99999976, z: 1.0000001}
+    - name: BRLeg
+      parentName: PelvisBR
+      position: {x: -0.000000035813297, y: 0.14142138, z: 0.0000000026921931}
+      rotation: {x: 0.059938334, y: 0.86796343, z: 0.09867287, w: 0.4830224}
+      scale: {x: 0.9999998, y: 1.0000001, z: 0.9999998}
+    - name: BRLeg_end
+      parentName: BRLeg
+      position: {x: -0, y: 0.3, z: 0}
+      rotation: {x: 0, y: -0, z: -0, w: 1}
+      scale: {x: 1, y: 1, z: 1}
+    - name: BLLeg
+      parentName: Creeper2(Clone)
+      position: {x: 19.999996, y: 14.999994, z: -10}
+      rotation: {x: -0.7071069, y: -0.000000008429372, z: -0.000000008429366, w: 0.7071067}
+      scale: {x: 39.999992, y: 39.999992, z: 60.000004}
+    - name: BRLeg
+      parentName: Creeper2(Clone)
+      position: {x: 19.999996, y: 15.000001, z: 9.999996}
+      rotation: {x: -0.7071069, y: -0.000000008429372, z: -0.000000008429366, w: 0.7071067}
+      scale: {x: 39.999992, y: 39.999992, z: 60.000004}
+    - name: Body
+      parentName: Creeper2(Clone)
+      position: {x: -0.0000010196134, y: 59.999992, z: -0.000010597041}
+      rotation: {x: -0.7071069, y: -0.000000008429372, z: -0.000000008429366, w: 0.7071067}
+      scale: {x: 39.999992, y: 79.999985, z: 120.00001}
+    - name: FLLeg
+      parentName: Creeper2(Clone)
+      position: {x: -19.999998, y: 14.999994, z: -10.000003}
+      rotation: {x: -0.7071069, y: -0.000000008429372, z: -0.000000008429366, w: 0.7071067}
+      scale: {x: 39.999992, y: 39.999992, z: 60.000004}
+    - name: FRLeg
+      parentName: Creeper2(Clone)
+      position: {x: -19.999998, y: 15.000001, z: 9.999994}
+      rotation: {x: -0.7071069, y: -0.000000008429372, z: -0.000000008429366, w: 0.7071067}
+      scale: {x: 39.999992, y: 39.999992, z: 60.000004}
+    - name: Head
+      parentName: Creeper2(Clone)
+      position: {x: -0.0000010196131, y: 109.99999, z: -0.000018743072}
+      rotation: {x: -0.7071069, y: -0.000000008429374, z: -0.000000008429367, w: 0.7071067}
+      scale: {x: 79.99999, y: 79.99999, z: 79.99999}
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    globalScale: 25
+    rootMotionBoneName: Root
+    hasTranslationDoF: 0
+    hasExtraRoot: 1
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  autoGenerateAvatarMappingIfUnspecified: 1
+  animationType: 2
+  humanoidOversampling: 1
+  avatarSetup: 1
+  addHumanoidExtraRootOnlyWhenUsingAvatar: 1
+  importBlendShapeDeformPercent: 1
+  remapMaterialsIfMaterialImportModeIsNone: 0
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

@@ -620,6 +620,7 @@ GameObject:
   - component: {fileID: 5776719440368840180}
   - component: {fileID: 7794094344942217307}
   - component: {fileID: 51703607575446855}
+  - component: {fileID: 1555735749907430675}
   m_Layer: 0
   m_Name: Bone_015
   m_TagString: Untagged
@@ -739,6 +740,20 @@ CharacterJoint:
   m_EnablePreprocessing: 0
   m_MassScale: 1
   m_ConnectedMassScale: 1
+--- !u!114 &1555735749907430675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3363573864552678066}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7208b52192102549b3c7ddb274b403b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  owner: {fileID: 2489450777866315502}
+  partType: 7
 --- !u!1 &3393845027256164713
 GameObject:
   m_ObjectHideFlags: 0
@@ -916,7 +931,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 3
+  partType: 6
 --- !u!1 &3860921118533903217
 GameObject:
   m_ObjectHideFlags: 0
@@ -1168,7 +1183,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 5
+  partType: 10
 --- !u!1 &4449341019242482293
 GameObject:
   m_ObjectHideFlags: 0
@@ -1472,7 +1487,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 2
+  partType: 4
 --- !u!1 &6642051377167476953
 GameObject:
   m_ObjectHideFlags: 0
@@ -1603,7 +1618,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 1
+  partType: 2
 --- !u!1 &6870746153927348241
 GameObject:
   m_ObjectHideFlags: 0
@@ -1749,7 +1764,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 4
+  partType: 10
 --- !u!1 &6945639109317842342
 GameObject:
   m_ObjectHideFlags: 0
@@ -1762,6 +1777,7 @@ GameObject:
   - component: {fileID: 3903263572761251651}
   - component: {fileID: 7077948367428399748}
   - component: {fileID: 5478650992560265433}
+  - component: {fileID: 7331761570010723114}
   m_Layer: 0
   m_Name: Bone_008
   m_TagString: Untagged
@@ -1881,6 +1897,20 @@ CharacterJoint:
   m_EnablePreprocessing: 0
   m_MassScale: 1
   m_ConnectedMassScale: 1
+--- !u!114 &7331761570010723114
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6945639109317842342}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7208b52192102549b3c7ddb274b403b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  owner: {fileID: 2489450777866315502}
+  partType: 9
 --- !u!1 &7126640986960586338
 GameObject:
   m_ObjectHideFlags: 0
@@ -1893,6 +1923,7 @@ GameObject:
   - component: {fileID: 8462604571562914109}
   - component: {fileID: 2777876006920707169}
   - component: {fileID: 5920851047622854281}
+  - component: {fileID: 430464442079685204}
   m_Layer: 0
   m_Name: Bone_012
   m_TagString: Untagged
@@ -2012,6 +2043,20 @@ CharacterJoint:
   m_EnablePreprocessing: 0
   m_MassScale: 1
   m_ConnectedMassScale: 1
+--- !u!114 &430464442079685204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7126640986960586338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7208b52192102549b3c7ddb274b403b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  owner: {fileID: 2489450777866315502}
+  partType: 3
 --- !u!1 &7577366587642527936
 GameObject:
   m_ObjectHideFlags: 0
@@ -2263,7 +2308,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
-  partType: 0
+  partType: 1
 --- !u!1 &8288060769697473526
 GameObject:
   m_ObjectHideFlags: 0
@@ -2414,6 +2459,7 @@ GameObject:
   - component: {fileID: 3165341214146442461}
   - component: {fileID: 1680909939655540083}
   - component: {fileID: 7770381699317140871}
+  - component: {fileID: 1275388765725160285}
   m_Layer: 0
   m_Name: Bone_005
   m_TagString: Untagged
@@ -2533,6 +2579,20 @@ CharacterJoint:
   m_EnablePreprocessing: 0
   m_MassScale: 1
   m_ConnectedMassScale: 1
+--- !u!114 &1275388765725160285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9141027249102464749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7208b52192102549b3c7ddb274b403b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  owner: {fileID: 2489450777866315502}
+  partType: 5
 --- !u!1 &9221449090684079631
 GameObject:
   m_ObjectHideFlags: 0

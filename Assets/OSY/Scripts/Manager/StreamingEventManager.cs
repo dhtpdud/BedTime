@@ -105,12 +105,12 @@ public class StreamingEventManager : MonoBehaviour
             async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth)
             {
                 //Utils.hashMemory.TryAdd(hash, profile.nickname);
-                bool isInit = GameManager.instance.viewerInfos.FirstOrDefault(viewerInfo => viewerInfo.userName == userName) == null;
+                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userName);
                 float addLifeTime = 0;
 
                 if (isInit)
                 {
-                    GameManager.instance.viewerInfos.Add(new GameManager.ViewerInfo(profile.nickname, subMonth));
+                    GameManager.instance.viewerInfos.Add(profile.nickname, new GameManager.ViewerInfo(profile.nickname, subMonth));
                     /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
                     SteveEventSystemHandle.OnSpawn.Invoke(userName);
@@ -176,19 +176,19 @@ public class StreamingEventManager : MonoBehaviour
             {
                 string authVal = $"{authorDetails.channelId}{GameManager.instance.nameSpliter}{authorDetails.displayName}";
                 //Utils.hashMemory.TryAdd(hash, authVal);
-                //bool isInit = !GameManager.instance.viewerInfos.ContainsKey(hash);
+                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userName);
                 float addLifeTime = 0;
 
-                /*if (isInit)
+                if (isInit)
                 {
-                    GameManager.instance.viewerInfos.Add(hash, new GameManager.ViewerInfo(authVal, subMonth));
-                    GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
-                        initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));
-                    SteveEventSystemHandle.OnSpawn.Invoke();
+                    GameManager.instance.viewerInfos.Add(userName, new GameManager.ViewerInfo(authVal, subMonth));
+                    /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
+                        initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
+                    SteveEventSystemHandle.OnSpawn.Invoke(userName);
                     await Utils.YieldCaches.UniTaskYield;
                 }
                 else
-                    addLifeTime = GameManager.instance.peepoConfig.addLifeTime;*/
+                    addLifeTime = GameManager.instance.peepoConfig.addLifeTime;
 
                 SteveEventSystemHandle.OnChat.Invoke(userName, chatText, addLifeTime);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;

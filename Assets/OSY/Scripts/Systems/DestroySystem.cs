@@ -31,7 +31,7 @@ public partial struct DestroySystem : ISystem
         }
     }
     [BurstCompile]
-    [WithNone(typeof(SteveComponent))]
+    [WithNone(typeof(PlayerComponent))]
     partial struct TimeLimitedJob : IJobEntity
     {
         [ReadOnly] public TimeData time;

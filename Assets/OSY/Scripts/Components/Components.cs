@@ -27,7 +27,11 @@ public enum SteveState
     Ragdoll,
     Dragging
 }
-public struct SteveComponent : IComponentData
+public struct NameTagComponent : IComponentData //해당 컨포넌트를 가지고 있는 Entity는 전부 NameTag를 표시
+{
+    public FixedString64Bytes name;
+}
+public struct PlayerComponent : IComponentData
 {
     public FixedString64Bytes userName;
     public SteveState lastState;
@@ -38,10 +42,15 @@ public struct SteveComponent : IComponentData
 public enum SteveBodyPart
 {
     Head,
-    Torso,
+    Chest,
+    Spine,
+    RightUpperArm,
     RightHand,
+    LeftUpperArm,
     LeftHand,
+    RightThigh,
     RightFoot,
+    LeftThigh,
     LeftFoot
 }
 public struct BodyPartComponent : IComponentData

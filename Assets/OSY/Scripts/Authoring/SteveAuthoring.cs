@@ -9,8 +9,8 @@ public class SteveAuthoring : MonoBehaviour
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            SteveComponent steveComponent = new SteveComponent();
-            AddComponent(entity, steveComponent);
+            PlayerComponent playerComponent = new PlayerComponent();
+            AddComponent(entity, playerComponent);
             //AddComponent(entity, new PhysicsGravityFactor { Value = 1 });
 
             AddComponent(entity, new RandomDataComponent
