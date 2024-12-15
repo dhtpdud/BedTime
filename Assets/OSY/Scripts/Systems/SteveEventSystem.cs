@@ -119,7 +119,7 @@ public partial class SteveEventSystem : SystemBase
             tempPlayerRef.Dispose();
             try
             {
-                Debug.Log(text);
+                //Debug.Log(text);
 
                 if (text.Contains(commandSplitter))
                 {

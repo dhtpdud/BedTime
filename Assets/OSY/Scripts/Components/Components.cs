@@ -39,6 +39,13 @@ public struct PlayerComponent : IComponentData
     public float bedTime;
     public bool isBed;
 }
+public struct ExplosiveComponent : IComponentData
+{
+    public bool isEnable;
+    public float range;
+    public float power;
+    public float timer;
+}
 public enum SteveBodyPart
 {
     Head,
