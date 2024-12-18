@@ -9,6 +9,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
+using static ChzzkUnity;
 
 public class StreamingEventManager : MonoBehaviour
 {
@@ -104,22 +105,23 @@ public class StreamingEventManager : MonoBehaviour
 
             async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth)
             {
+                string userID = $"{PlatformNameCache.Chzzk}!:{profile.nickname}";
                 //Utils.hashMemory.TryAdd(hash, profile.nickname);
-                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userName);
+                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userID);
                 float addLifeTime = 0;
 
                 if (isInit)
                 {
-                    GameManager.instance.viewerInfos.Add(profile.nickname, new GameManager.ViewerInfo(profile.nickname, subMonth));
+                    GameManager.instance.viewerInfos.Add(userID, new GameManager.ViewerInfo(profile.nickname, subMonth));
                     /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
-                    SteveEventSystemHandle.OnSpawn.Invoke(userName);
+                    SteveEventSystemHandle.OnSpawn.Invoke(userID);
                     await Utils.YieldCaches.UniTaskYield;
                 }
                 else
                     addLifeTime = GameManager.instance.peepoConfig.addLifeTime;
 
-                SteveEventSystemHandle.OnChat.Invoke(userName, chatText, addLifeTime);
+                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }
@@ -174,23 +176,24 @@ public class StreamingEventManager : MonoBehaviour
 
             async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, YoutubeUnity.LiveChatInfo.Chat.AuthorDetails authorDetails, int subMonth = 0)
             {
+                string userID = $"{PlatformNameCache.YouTube}!:{userName}";
                 string authVal = $"{authorDetails.channelId}{GameManager.instance.nameSpliter}{authorDetails.displayName}";
                 //Utils.hashMemory.TryAdd(hash, authVal);
-                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userName);
+                bool isInit = !GameManager.instance.viewerInfos.ContainsKey(userID);
                 float addLifeTime = 0;
 
                 if (isInit)
                 {
-                    GameManager.instance.viewerInfos.Add(userName, new GameManager.ViewerInfo(authVal, subMonth));
+                    GameManager.instance.viewerInfos.Add(userID, new GameManager.ViewerInfo(authVal, subMonth));
                     /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
-                    SteveEventSystemHandle.OnSpawn.Invoke(userName);
+                    SteveEventSystemHandle.OnSpawn.Invoke(userID);
                     await Utils.YieldCaches.UniTaskYield;
                 }
                 else
                     addLifeTime = GameManager.instance.peepoConfig.addLifeTime;
 
-                SteveEventSystemHandle.OnChat.Invoke(userName, chatText, addLifeTime);
+                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }

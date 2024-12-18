@@ -19,12 +19,12 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
 
     public void OnUpdate(ref SystemState state)
     {
-        if (GameManager.instance?.chatBubbleUICanvasTransform != null && GameManager.instance.chatBubbleUICanvasTransform.gameObject.activeInHierarchy)
-            new UpdateChatBubbleHUDJob { topRightScreenPoint = this.topRightScreenPoint }.ScheduleParallel();
+        /*if (GameManager.instance?.chatBubbleUICanvasTransform != null && GameManager.instance.chatBubbleUICanvasTransform.gameObject.activeInHierarchy)
+            new UpdateChatBubbleHUDJob { topRightScreenPoint = this.topRightScreenPoint }.ScheduleParallel();*/
         if (GameManager.instance?.nameTagUICanvasTransform != null && GameManager.instance.nameTagUICanvasTransform.gameObject.activeInHierarchy)
             new UpdateNameTagHUDJob { topRightScreenPoint = this.topRightScreenPoint }.ScheduleParallel(state.Dependency).Complete();
     }
-    public partial struct UpdateChatBubbleHUDJob : IJobEntity
+    /*public partial struct UpdateChatBubbleHUDJob : IJobEntity
     {
         [ReadOnly] public float2 topRightScreenPoint;
         public void Execute(in LocalTransform localTransform, in HashIDComponent hash)
@@ -37,7 +37,7 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
             UniTask.RunOnThreadPool(async () =>
             {
                 await UniTask.SwitchToMainThread();
-                /*if (GameManager.instance.viewerInfos != null)
+                *//*if (GameManager.instance.viewerInfos != null)
                     if (GameManager.instance.viewerInfos.ContainsKey(hashID))
                     {
                         RectTransform bubbleTransform = (RectTransform)GameManager.instance.viewerInfos[hashID]?.chatBubbleObjects?.transform;
@@ -52,10 +52,10 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
                             bubbleTransform.localPosition = (Vector2)math.clamp(targetPosition, new float2(MinX, MinY), new float2(MaxX, MaxY));
                             //bubbleTransform.localPosition = targetPosition;
                         }
-                    }*/
+                    }*//*
             }, true, GameManager.instance.destroyCancellationToken).Forget();
         }
-    }
+    }*/
     public partial struct UpdateNameTagHUDJob : IJobEntity
     {
         [ReadOnly] public float2 topRightScreenPoint;

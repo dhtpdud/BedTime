@@ -369,6 +369,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 256e56fa534b9304d88d2519471a907c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bodyParts:
+  - {fileID: 3153247575111335929}
+  - {fileID: 9036851834592192799}
+  - {fileID: 7770381699317140871}
+  - {fileID: 858375806188829865}
+  - {fileID: 5920851047622854281}
+  - {fileID: 3540080018485038007}
+  - {fileID: 5478650992560265433}
+  - {fileID: 6338736090338680790}
+  - {fileID: 51703607575446855}
+  - {fileID: 8092495308693800647}
 --- !u!1 &2849309805905962685
 GameObject:
   m_ObjectHideFlags: 0
@@ -1529,7 +1540,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4136905727899480064}
-  - component: {fileID: 3893042794835540765}
+  - component: {fileID: 3135022039426679816}
   - component: {fileID: 6096993258673660780}
   - component: {fileID: 566213091937245822}
   m_Layer: 0
@@ -1557,8 +1568,8 @@ Transform:
   - {fileID: 2446515416815889884}
   m_Father: {fileID: 4915652618158677697}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &3893042794835540765
-BoxCollider:
+--- !u!136 &3135022039426679816
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -1575,9 +1586,11 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.39999995, y: 0.25000024, z: 0.3000002}
-  m_Center: {x: 0, y: -0, z: 0.15}
+  serializedVersion: 2
+  m_Radius: 0.15
+  m_Height: 0.4
+  m_Direction: 0
+  m_Center: {x: 0, y: 0, z: 0.15}
 --- !u!54 &6096993258673660780
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -2172,7 +2185,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4106006770796803901}
-  - component: {fileID: 550448822659101357}
+  - component: {fileID: 9019302875839535649}
   - component: {fileID: 4071343010578189416}
   - component: {fileID: 3153247575111335929}
   - component: {fileID: 6311137211110241106}
@@ -2201,8 +2214,8 @@ Transform:
   - {fileID: 5504609703091520755}
   m_Father: {fileID: 2685976393991942600}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &550448822659101357
-BoxCollider:
+--- !u!136 &9019302875839535649
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -2219,9 +2232,11 @@ BoxCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.25000036, y: 0.3, z: 0.39999998}
-  m_Center: {x: -0.000000044703484, y: 0.15, z: -0.00000011920929}
+  serializedVersion: 2
+  m_Radius: 0.15
+  m_Height: 0.4
+  m_Direction: 2
+  m_Center: {x: 0, y: 0.15, z: 0}
 --- !u!54 &4071343010578189416
 Rigidbody:
   m_ObjectHideFlags: 0

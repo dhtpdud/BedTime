@@ -2,6 +2,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
+using Unity.Rendering;
 using Random = Unity.Mathematics.Random;
 using Ray = UnityEngine.Ray;
 
@@ -12,10 +13,6 @@ public struct DragableTag : IComponentData
 public struct DestroyMark : IComponentData
 {
 
-}
-public struct HashIDComponent : IComponentData
-{
-    public int ID;
 }
 public struct TimeLimitedLifeComponent : IComponentData
 {
@@ -44,7 +41,8 @@ public struct ExplosiveComponent : IComponentData
     public bool isEnable;
     public float range;
     public float power;
-    public float timer;
+    public float time;
+    public float maxTime;
 }
 public enum SteveBodyPart
 {
@@ -65,6 +63,11 @@ public struct BodyPartComponent : IComponentData
     public Entity ownerEntity;
     public SteveBodyPart partType;
 }
+/*[ChunkSerializable]
+public struct BodyPartsOwnerComponent : IComponentData
+{
+    public NativeArray<Entity> partEntities;
+}*/
 public struct DonationConfig
 {
     public float objectCountFactor;
@@ -105,6 +108,7 @@ public struct SpawnerComponent : IComponentData
 
     public float spawnIntervalSec;
     public float currentSec;
+    public int batchCount;
 
     public bool isRandomSize;
     public float minSize;

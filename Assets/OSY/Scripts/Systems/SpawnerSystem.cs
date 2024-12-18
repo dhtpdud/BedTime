@@ -1,4 +1,3 @@
-using Rukhanka;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Core;
@@ -9,31 +8,66 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct SpawnerSystem : ISystem
 {
+
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        new TimerJob { time = SystemAPI.Time }.ScheduleParallel(state.Dependency).Complete();
+
         EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-        new SpawnerJob { time = SystemAPI.Time, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel();
+
+        foreach (var spawner in SystemAPI.Query<RefRW<SpawnerComponent>>())
+        {
+            if (spawner.ValueRO.currentSec >= spawner.ValueRO.spawnIntervalSec)
+            {
+                spawner.ValueRW.currentSec = 0;
+                new SpawnJob {parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(state.Dependency).Complete();
+            }
+        }
     }
+
     [BurstCompile]
-    partial struct SpawnerJob : IJobEntity
+    partial struct TimerJob : IJobEntity
     {
         [ReadOnly] public TimeData time;
+        public void Execute(ref SpawnerComponent spawnerComponent)
+        {
+            if (spawnerComponent.currentSec < spawnerComponent.spawnIntervalSec)
+                spawnerComponent.currentSec += time.DeltaTime;
+        }
+    }
+    [BurstCompile]
+    partial struct SpawnJob : IJobEntity
+    {
         public EntityCommandBuffer.ParallelWriter parallelWriter;
         public void Execute([ChunkIndexInQuery] int chunkIndex, ref SpawnerComponent spawnerComponent, ref RandomDataComponent randomDataComponent, in LocalTransform spawnerTransformComponent)
         {
             if (spawnerComponent.spawnedCount >= spawnerComponent.maxCount) return;
-            if (spawnerComponent.currentSec < spawnerComponent.spawnIntervalSec)
+            Entity spawnedEntity;
+            LocalTransform initTransform;
+            if (spawnerComponent.spawnIntervalSec == 0)
             {
-                spawnerComponent.currentSec += time.DeltaTime;
+                int remainCount = spawnerComponent.maxCount - spawnerComponent.spawnedCount;
+                if (remainCount <= 0) return;
+                int batchCount = remainCount > spawnerComponent.batchCount ? spawnerComponent.batchCount : remainCount;
+                for (int i = 0; i < batchCount; i++)
+                {
+                    randomDataComponent.Random = new Random((uint)randomDataComponent.Random.NextInt(int.MinValue, int.MaxValue));
+                    spawnedEntity = parallelWriter.Instantiate(chunkIndex, spawnerComponent.targetEntity);
+                    initTransform = new LocalTransform { Position = spawnerTransformComponent.Position, Rotation = spawnerTransformComponent.Rotation, Scale = spawnerComponent.isRandomSize ? randomDataComponent.Random.NextFloat(spawnerComponent.minSize, spawnerComponent.maxSize) : 1 };
+                    parallelWriter.SetComponent(chunkIndex, spawnedEntity, initTransform);
+                    ++spawnerComponent.spawnedCount;
+                    //parallelWriter.SetName(chunkIndex, spawnedEntity, $"Steve{}");
+                }
                 return;
             }
-            spawnerComponent.currentSec = 0;
             randomDataComponent.Random = new Random((uint)randomDataComponent.Random.NextInt(int.MinValue, int.MaxValue));
-            Entity spawnedEntity = parallelWriter.Instantiate(chunkIndex, spawnerComponent.targetEntity);
-            var initTransform = new LocalTransform { Position = spawnerTransformComponent.Position, Rotation = spawnerTransformComponent.Rotation, Scale = spawnerComponent.isRandomSize ? randomDataComponent.Random.NextFloat(spawnerComponent.minSize, spawnerComponent.maxSize) : 1 };
+            spawnedEntity = parallelWriter.Instantiate(chunkIndex, spawnerComponent.targetEntity);
+            initTransform = new LocalTransform { Position = spawnerTransformComponent.Position, Rotation = spawnerTransformComponent.Rotation, Scale = spawnerComponent.isRandomSize ? randomDataComponent.Random.NextFloat(spawnerComponent.minSize, spawnerComponent.maxSize) : 1 };
             parallelWriter.SetComponent(chunkIndex, spawnedEntity, initTransform);
-            parallelWriter.SetName(chunkIndex, spawnedEntity, $"Steve{++spawnerComponent.spawnedCount}");
+            ++spawnerComponent.spawnedCount;
+            //parallelWriter.SetName(chunkIndex, spawnedEntity, $"Steve{}");
+
 
             //spawnerComponent.spawnedCount++;
         }

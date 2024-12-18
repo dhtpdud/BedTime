@@ -431,6 +431,10 @@ namespace OSY
         {
             return math.float3(target.x, target.y, 0);
         }
+        public static float3 ToFloat3(this Vector3 target)
+        {
+            return math.float3(target.x, target.y, target.z);
+        }
         public static float2 ToFloat2(this Vector3 target)
         {
             return math.float2(target.x, target.y);
