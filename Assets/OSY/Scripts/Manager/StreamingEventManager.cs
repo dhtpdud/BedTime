@@ -10,6 +10,7 @@ using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.UI;
 using static ChzzkUnity;
+using static System.Net.Mime.MediaTypeNames;
 
 public class StreamingEventManager : MonoBehaviour
 {
@@ -74,7 +75,7 @@ public class StreamingEventManager : MonoBehaviour
             ChzzkUnity.instance.OnChat = async (profile, chatID, chatText) =>
             {
                 await UniTask.SwitchToMainThread();
-                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, profile.streamingProperty?.subscription?.accumulativeMonth ?? 0);
+                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, profile.streamingProperty?.subscription?.accumulativeMonth ?? 0, 0);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatID, chatText, 5f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
             ChzzkUnity.instance.OnDonation = async (profile, chatID, chatText, extra) =>
@@ -82,13 +83,13 @@ public class StreamingEventManager : MonoBehaviour
                 await UniTask.SwitchToMainThread();
                 if (profile == null) //익명 후원
                 {
-                    SteveEventSystemHandle.OnDonation.Invoke(-1, extra.payAmount);
+                    SteveEventSystemHandle.OnChat.Invoke(null, chatText, 0, extra.payAmount);
                     //new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.unknownDonationParentsTransform, true);
                     return;
                 }
                 int hash = Animator.StringToHash(profile.nickname);
-                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, profile.streamingProperty?.subscription?.accumulativeMonth ?? 0);
-                SteveEventSystemHandle.OnDonation.Invoke(hash, extra.payAmount);
+                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, profile.streamingProperty?.subscription?.accumulativeMonth ?? 0, extra.payAmount);
+                //SteveEventSystemHandle.OnChat.Invoke(profile.nickname., chatText, 24, extra.payAmount);
 
                 //new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.unknownDonationParentsTransform, true);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
@@ -98,12 +99,12 @@ public class StreamingEventManager : MonoBehaviour
                 await UniTask.SwitchToMainThread();
                 if (profile == null) return;
                 int hash = Animator.StringToHash(profile.nickname);
-                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, extra.month);
+                await OnInit(profile.nickname, chatText, SteveEventSystemHandle, profile, extra.month, 0);
                 SteveEventSystemHandle.OnSubscription.Invoke(hash, extra.month);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatID, "<b><color=red>" + chatText + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
 
-            async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth)
+            async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth, int payAmount)
             {
                 string userID = $"{PlatformNameCache.Chzzk}!:{profile.nickname}";
                 //Utils.hashMemory.TryAdd(hash, profile.nickname);
@@ -118,10 +119,9 @@ public class StreamingEventManager : MonoBehaviour
                     SteveEventSystemHandle.OnSpawn.Invoke(userID);
                     await Utils.YieldCaches.UniTaskYield;
                 }
-                else
-                    addLifeTime = GameManager.instance.peepoConfig.addLifeTime;
+                addLifeTime = payAmount > 0 ? GameManager.instance.peepoConfig.addLifeTime : 86400;
 
-                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime);
+                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime, payAmount);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }
@@ -141,8 +141,8 @@ public class StreamingEventManager : MonoBehaviour
             {
                 await UniTask.SwitchToMainThread();
                 int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
-                await OnInit(chatInfo.authorDetails.displayName, chatInfo.snippet.displayMessage, SteveEventSystemHandle, chatInfo.authorDetails);
-                SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
+                await OnInit(chatInfo.authorDetails.displayName, chatInfo.snippet.displayMessage, SteveEventSystemHandle, chatInfo.authorDetails, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
+                //SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
 
                 //new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.unknownDonationParentsTransform, true);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=orange>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
@@ -151,8 +151,8 @@ public class StreamingEventManager : MonoBehaviour
             {
                 await UniTask.SwitchToMainThread();
                 int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
-                await OnInit(chatInfo.authorDetails.displayName, chatInfo.snippet.displayMessage, SteveEventSystemHandle, chatInfo.authorDetails);
-                SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superStickerDetails.amountDisplayString, @"\D", "")));
+                await OnInit(chatInfo.authorDetails.displayName, chatInfo.snippet.displayMessage, SteveEventSystemHandle, chatInfo.authorDetails, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
+                //SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superStickerDetails.amountDisplayString, @"\D", "")));
 
                 //new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.unknownDonationParentsTransform, true);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=orange>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
@@ -174,7 +174,7 @@ public class StreamingEventManager : MonoBehaviour
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=red>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
 
-            async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, YoutubeUnity.LiveChatInfo.Chat.AuthorDetails authorDetails, int subMonth = 0)
+            async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, YoutubeUnity.LiveChatInfo.Chat.AuthorDetails authorDetails, int subMonth = 0, int payAmount = 0)
             {
                 string userID = $"{PlatformNameCache.YouTube}!:{userName}";
                 string authVal = $"{authorDetails.channelId}{GameManager.instance.nameSpliter}{authorDetails.displayName}";
@@ -190,10 +190,9 @@ public class StreamingEventManager : MonoBehaviour
                     SteveEventSystemHandle.OnSpawn.Invoke(userID);
                     await Utils.YieldCaches.UniTaskYield;
                 }
-                else
-                    addLifeTime = GameManager.instance.peepoConfig.addLifeTime;
+                addLifeTime = payAmount > 0 ? GameManager.instance.peepoConfig.addLifeTime : 86400;
 
-                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime);
+                SteveEventSystemHandle.OnChat.Invoke(userID, chatText, addLifeTime, payAmount);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }

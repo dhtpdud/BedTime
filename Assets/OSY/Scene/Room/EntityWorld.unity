@@ -258,6 +258,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   steve: {fileID: 2489450777866315502, guid: 3950ebbf07b3200469bc631a81d3390a, type: 3}
+  creeper: {fileID: 2257174715013178830, guid: e246ee517199e58468ed1e18f7e3a1ce, type: 3}
 --- !u!4 &36913232
 Transform:
   m_ObjectHideFlags: 0
@@ -378,6 +379,50 @@ Transform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 10, y: 1, z: 10}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &134516183
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 134516185}
+  - component: {fileID: 134516184}
+  m_Layer: 0
+  m_Name: MainSpawner
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &134516184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 134516183}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87279c917feae65448f8f37fad42dfbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &134516185
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 134516183}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 3, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -507,7 +552,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &351046942
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -894,10 +939,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 53accc8dcd6df424f989ae6975a3e894, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 2489450777866315502, guid: 3950ebbf07b3200469bc631a81d3390a, type: 3}
-  totalCount: 1600
+  target: {fileID: 2257174715013178830, guid: e246ee517199e58468ed1e18f7e3a1ce, type: 3}
+  totalCount: 5000
   intervalSec: 0
-  batchCount: 50
+  batchCount: 300
   isRandomSize: 0
   minSize: 1
   maxSize: 1
@@ -1410,6 +1455,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Creeper
       objectReference: {fileID: 0}
+    - target: {fileID: 2257174715013178830, guid: e246ee517199e58468ed1e18f7e3a1ce, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3785112719554748363, guid: e246ee517199e58468ed1e18f7e3a1ce, type: 3}
       propertyPath: maxTime
       value: 10
@@ -1439,3 +1488,4 @@ SceneRoots:
   - {fileID: 1240300858}
   - {fileID: 1607314187}
   - {fileID: 1921939762}
+  - {fileID: 134516185}

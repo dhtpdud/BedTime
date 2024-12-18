@@ -94,11 +94,7 @@ public struct SteveConfig
 public struct EntityStoreComponent : IComponentData
 {
     public Entity steve;
-
-    public EntityStoreComponent(Entity steve)
-    {
-        this.steve = steve;
-    }
+    public Entity creeper;
 }
 public struct SpawnerComponent : IComponentData
 {
@@ -114,6 +110,8 @@ public struct SpawnerComponent : IComponentData
     public float minSize;
     public float maxSize;
 }
+public struct MainSpawnerTag : IComponentData
+{ }
 public struct GameManagerSingletonComponent : IComponentData
 {
     public struct DragingEntityInfo
