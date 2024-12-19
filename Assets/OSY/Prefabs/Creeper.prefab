@@ -143,8 +143,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isEnable: 1
-  range: 5
-  power: 50
+  range: 7
+  power: 100
   maxTime: 3
 --- !u!114 &1834636172009716365
 MonoBehaviour:

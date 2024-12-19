@@ -134,7 +134,7 @@ public class YoutubeUnity : MonoBehaviour
                 public class SuperChatDetails
                 {
                     public long amountMicros;
-                    public int currency;
+                    public string currency;
                     public string amountDisplayString;
                     public string userComment;
                     public int tier;
@@ -143,7 +143,7 @@ public class YoutubeUnity : MonoBehaviour
                 {
                     public System.Object superStickerMetadata;
                     public long amountMicros;
-                    public int currency;
+                    public string currency;
                     public string amountDisplayString;
                     public int tier;
                 }

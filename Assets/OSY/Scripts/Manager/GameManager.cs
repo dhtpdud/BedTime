@@ -215,23 +215,21 @@ public class GameManager : MonoBehaviour
     }*/
     public class ViewerInfo
     {
-        public FixedString64Bytes userName;
         public int subscribeMonth;
         /*public GameObject chatBubbleObjects;
         public List<ChatInfo> chatInfos;*/
         public GameObject nameTagObject;
-        public ViewerInfo(string nickName, int subscribeMonth = 0)
+        public ViewerInfo(string displayName, int subscribeMonth = 0)
         {
-            this.userName = nickName;
             this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
             //chatInfos = new List<ChatInfo>();
             //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
             var tmp = nameTagObject.GetComponentInChildren<TMP_Text>();
 
-            if (nickName.Contains(GameManager.instance.nameSpliter))
-                nickName = nickName.Split(GameManager.instance.nameSpliter)[1];
+            if (displayName.Contains(GameManager.instance.nameSpliter))
+                displayName = displayName.Split(GameManager.instance.nameSpliter)[1];
 
-            tmp.text = subscribeMonth > 0 ? $"{nickName}\n[{subscribeMonth}Month]" : nickName;
+            tmp.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
             //Debug.Log(nicknameColor.ToHexString());
             tmp.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0) : Color.white;
         }

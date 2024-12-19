@@ -516,7 +516,7 @@ namespace OSY
                     Debug.LogException(e);
                     if (!isKeepTry)
                         return null;
-                    await UniTask.Delay(TimeSpan.FromSeconds(1f), false, PlayerLoopTiming.Update, token);
+                    await UniTask.Delay(TimeSpan.FromSeconds(1f), true, PlayerLoopTiming.Update, token);
                     request = UnityWebRequest.Get(url);
                 }
             }

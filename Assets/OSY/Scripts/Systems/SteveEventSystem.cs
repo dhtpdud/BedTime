@@ -14,10 +14,11 @@ using Unity.Transforms;
 using UnityEngine;
 using WebSocketSharp;
 
+[BurstCompile]
 public partial class SteveEventSystem : SystemBase
 {
     #region string 캐싱
-    public List<string> adminNames = new List<string>();
+    public List<FixedString64Bytes> adminNames = new List<FixedString64Bytes>();
 
     public const string stringP = "p";
     public const string stringPush = "push";
@@ -31,6 +32,8 @@ public partial class SteveEventSystem : SystemBase
     public const string stringLoopStop = "loopstop";
     public const string stringLSA = "lsa";
     public const string stringLoopStopAll = "loopstopall";
+    public const string stringLSAA = "lsaa";
+    public const string stringLoopStopAllAdmin = "loopstopalladmin";
 
     public const string stringReset = "reset";
     public const string stringRA = "ra";
@@ -64,258 +67,319 @@ public partial class SteveEventSystem : SystemBase
     public Action<int> OnBan;
 
 
-    BlobAssetReference<SteveConfig> steveConfig;
-    BlobAssetReference<DonationConfig> donationConfig;
+    /*BlobAssetReference<SteveConfig> steveConfig;
+    BlobAssetReference<DonationConfig> donationConfig;*/
     TimeData timeData;
 
-    Dictionary<FixedString64Bytes, CancellationTokenSource> loopCommands = new Dictionary<FixedString64Bytes, CancellationTokenSource>();
+    Dictionary<FixedString64Bytes, Dictionary<FixedString64Bytes, CancellationTokenSource>> loopCommands = new Dictionary<FixedString64Bytes, Dictionary<FixedString64Bytes, CancellationTokenSource>>();
+
+    EntityStoreComponent store;
 
     protected override void OnCreate()
     {
         base.OnCreate();
-        CheckedStateRef.RequireForUpdate<GameManagerSingletonComponent>();
-        adminNames.Add($"{PlatformNameCache.Chzzk}!:보노 보노");
-        adminNames.Add($"{PlatformNameCache.YouTube}!:Kamer");
+        CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
+        adminNames.Add($"{PlatformNameCache.Chzzk}\n보노 보노");
+        adminNames.Add($"{PlatformNameCache.YouTube}\nKamer");
     }
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-        steveConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
-        donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;
+        /*steveConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
+        donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;*/
         timeData = SystemAPI.Time;
+        store = SystemAPI.GetSingleton<EntityStoreComponent>();
 
-        OnSpawn = (username) =>
+
+        var initPlayerComponent = new PlayerComponent { currentState = SteveState.Ragdoll };
+        var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
+        initPlayerLocalTransform.Position = GameManager.instance.spawnTransform.position;
+        //new LocalTransform { Position = GameManager.instance.spawnTransform.position, Rotation = quaternion.Euler(0, 180, 0), Scale = 1 };
+
+        OnSpawn = async (userNameString) =>
         {
-            EntityStoreComponent store = SystemAPI.GetSingleton<EntityStoreComponent>();
+            FixedString64Bytes userName = new FixedString64Bytes(userNameString);
+            EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
 
-            //EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
-            /*Debug.Log("시작전");
+            Entity spawnedPlayer = ecb.Instantiate(store.steve);
+            initPlayerComponent.userName = userName;
+            ecb.SetComponent(spawnedPlayer, initPlayerComponent);
+            ecb.SetComponent(spawnedPlayer, initPlayerLocalTransform);
 
-            NativeReference<Entity> spawnedPlayerRef = new NativeReference<Entity>(Allocator.TempJob);
-            new SpawnEntity { parallelWriter = ecb.AsParallelWriter(), targetEntity = store.steve, spawnedEntityRef = spawnedPlayerRef }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+            await UniTask.Yield();
+            await UniTask.Yield();
 
-            Debug.Log("잡완료");
-            Entity spawnedPlayer = spawnedPlayerRef.Value;
-            spawnedPlayerRef.Dispose();*/
-            Entity spawnedPlayer = EntityManager.Instantiate(store.steve);
-            Debug.Log("test");
-            var playerComponent = EntityManager.GetComponentData<PlayerComponent>(spawnedPlayer);
-            var localTransform = EntityManager.GetComponentData<LocalTransform>(spawnedPlayer);
-
-            playerComponent.currentState = SteveState.Ragdoll;
-            playerComponent.userName = username;
-            localTransform.Position = GameManager.instance.spawnTransform.position;
-
-            /*EntityManager.AddComponentData(spawnedSteve, new TimeLimitedLifeComponent
+            ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+            foreach (var (playerRef, entity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
             {
-                lifeTime = steveConfig.Value.DefalutLifeTime
-            });*/
-            EntityManager.SetComponentData(spawnedPlayer, playerComponent);
-            EntityManager.SetComponentData(spawnedPlayer, localTransform);
-            new PlayerInitJob { targetPlayerEntity = spawnedPlayer, userName = username, parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged).AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                if(playerRef.ValueRO.userName == userName)
+                new PlayerNameTagJob { targetPlayerEntity = entity, userName = userName, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+            }
         };
-        OnChat = async (userName, text, addValueLife, payAmount) =>
+        OnChat = async (userNameString, text, addValueLife, payAmount) =>
         {
-            EntityStoreComponent store = SystemAPI.GetSingleton<EntityStoreComponent>();
-            int cheezeCount = (int)(payAmount * donationConfig.Value.objectCountFactor);
-
-            foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
+            int cheezeCount = (int)(payAmount * 1/*donationConfig.Value.objectCountFactor*/);
+            bool isUnkown = userNameString == null || userNameString == string.Empty;
+            bool isAdmin = false;
+            FixedString64Bytes userName = string.Empty;
+            if (!isUnkown)
             {
-                var player = playerRef.ValueRO;
-                if (player.userName == userName)
+                userName = new FixedString64Bytes(userNameString);
+                isAdmin = adminNames.Contains(userName);
+            }
+
+            try
+            {
+                Debug.Log(userName +": "+ text);
+                if (text.Contains(commandSplitter))
                 {
-                    try
+                    string[] commandLines = text.Split(commandSplitter);
+                    for (int commandLineIndex = 1; commandLineIndex < commandLines.Length; commandLineIndex++)
                     {
-                        Debug.Log(userName +": "+ text);
+                        string[] commands = commandLines[commandLineIndex].Split(Utils.stringSpace);
 
-                        if (text.Contains(commandSplitter))
+                        SteveBodyPart part;
+                        switch (commands[0].ToLower())
                         {
-                            string[] commandLines = text.Split(commandSplitter);
-                            for (int commandLineIndex = 1; commandLineIndex < commandLines.Length; commandLineIndex++)
-                            {
-                                string[] commands = commandLines[commandLineIndex].Split(Utils.stringSpace);
+                            case stringD:
+                            case stringDelay:
+                                await UniTask.Delay(TimeSpan.FromSeconds(float.Parse(commands[1])));
+                                break;
 
-                                SteveBodyPart part;
-                                switch (commands[0].ToLower())
+                            case stringDT:
+                            case stringDanceTime:
+                                if (!isAdmin && payAmount == 0) break;
+                                if (danceCTS != null && !danceCTS.IsCancellationRequested)
                                 {
-                                    case stringD:
-                                    case stringDelay:
-                                        await UniTask.Delay(TimeSpan.FromSeconds(float.Parse(commands[1])));
-                                        break;
+                                    danceCTS?.Cancel();
+                                }
+                                danceCTS?.Dispose();
 
-                                    case stringDT:
-                                    case stringDanceTime:
-                                        if (!adminNames.Contains(userName) && payAmount == 0) break;
-                                        if (danceCTS != null && !danceCTS.IsCancellationRequested)
+                                await UniTask.Yield();
+                                await UniTask.Yield();
+
+                                float limitSec = float.Parse(commands[1]);
+                                limitSec = (limitSec <= -1 || limitSec > 10) && !isAdmin ? 10 : limitSec;
+
+                                danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+
+                                UniTask.RunOnThreadPool(async () =>
+                                {
+                                    await UniTask.SwitchToMainThread();
+                                    try
+                                    {
+                                        for (float timer = 0; limitSec == -1 || timer <= limitSec; timer += 0.5f)
                                         {
-                                            danceCTS?.Cancel();
+                                            if (danceCTS.IsCancellationRequested) return;
+                                            CheckedStateRef.Dependency = new StevePopupJob().ScheduleParallel(CheckedStateRef.Dependency);
+                                            CheckedStateRef.Dependency.Complete();
+                                            if (danceCTS.IsCancellationRequested) return;
+                                            await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
+                                            if (danceCTS.IsCancellationRequested) return;
                                         }
-                                        danceCTS?.Dispose();
+                                    }
+                                    finally
+                                    {
+                                        danceCTS?.Cancel();
+                                    }
+                                }, true, danceCTS.Token).Forget();
+                                break;
 
-                                        await UniTask.Yield();
-                                        await UniTask.Yield();
-
-                                        float limitSec = float.Parse(commands[1]);
-                                        limitSec = limitSec <= -1 || limitSec > 10 && !adminNames.Contains(userName) ? 10 : limitSec;
-
-                                        danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
-
-                                        UniTask.RunOnThreadPool(async () =>
-                                        {
-                                            await UniTask.SwitchToMainThread();
-                                            try
-                                            {
-                                                for (float timer = 0; limitSec == -1 || timer <= limitSec; timer += 0.5f)
-                                                {
-                                                    if (danceCTS.IsCancellationRequested) return;
-                                                    CheckedStateRef.Dependency = new StevePopupJob().ScheduleParallel(CheckedStateRef.Dependency);
-                                                    CheckedStateRef.Dependency.Complete();
-                                                    if (danceCTS.IsCancellationRequested) return;
-                                                    await UniTask.Delay(TimeSpan.FromSeconds(0.5f));
-                                                    if (danceCTS.IsCancellationRequested) return;
-                                                }
-                                            }
-                                            finally
-                                            {
-                                                danceCTS?.Cancel();
-                                            }
-                                        }, true, danceCTS.Token).Forget();
-                                        break;
-
-                                    case stringL:
-                                    case stringLoop:
-                                        FixedString64Bytes commandName1 = commands[1];
-                                        FixedString64Bytes commandKey1 = $"{userName}!:{commandName1}";
-                                        if (loopCommands.ContainsKey(commandKey1)) break;
-                                        var loopCommandCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
-
-                                        Debug.Log($"루프명: {commandKey1}\r\n횟수: {commands[2]}, 간격: {commands[3]}");
-                                        int maxCount = int.Parse(commands[2]);
-                                        float delay = float.Parse(commands[3]);
-                                        string remainCommands = commandSplitter + string.Join(commandSplitter, commandLines.SubArray(2, commandLines.Length - 2));
-                                        int loopEndIndex = remainCommands.IndexOf('}');
-                                        string targetCommands = remainCommands.Substring(0, loopEndIndex);
-                                        commandLines = remainCommands.Substring(loopEndIndex).Split(commandSplitter);
-                                        commandLineIndex = 0;
-                                        loopCommands.TryAdd(commandKey1, loopCommandCTS);
-
-                                        UniTask.RunOnThreadPool(async () =>
-                                        {
-                                            await UniTask.Yield();
-                                            try
-                                            {
-                                                for (int count = 0; maxCount == -1 || count < maxCount; count++)
-                                                {
-                                                    if (loopCommandCTS.IsCancellationRequested) return;
-                                                    OnChat(userName, targetCommands, addValueLife, payAmount);
-                                                    await UniTask.Delay(TimeSpan.FromSeconds(delay));
-                                                    if (loopCommandCTS.IsCancellationRequested) return;
-                                                }
-                                            }
-                                            finally
-                                            {
-                                                loopCommands.Remove(commandKey1);
-                                            }
-                                        }, true, loopCommandCTS.Token).Forget();
-                                        break;
-
-                                    case stringLS:
-                                    case stringLoopStop:
-                                        FixedString64Bytes commandName2 = commands[1];
-                                        FixedString64Bytes commandKey2 = $"{userName}!:{commandName2}";
-                                        if (!loopCommands.ContainsKey(commandKey2)) return;
-                                        loopCommands[commandKey2]?.Cancel();
-                                        loopCommands[commandKey2]?.Dispose();
-                                        loopCommands.Remove(commandKey2);
-                                        break;
-
-                                    case stringLSA:
-                                    case stringLoopStopAll:
-                                        foreach (var CTS in loopCommands.Values)
-                                        {
-                                            CTS?.Cancel();
-                                            CTS?.Dispose();
-                                        }
-                                        loopCommands.Clear();
-                                        break;
-
-                                    case stringReset:
-                                        new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
-                                        break;
-                                    case stringRA:
-                                    case stringResetAll:
-                                        if (!adminNames.Contains(userName) && payAmount == 0 || isResettingAll) break;
-                                        isResettingAll = true;
-                                        int batchCountRA = 0;
-                                        foreach (var bodyPart in SystemAPI.Query<RefRO<BodyPartComponent>>())
-                                        {
-                                            new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = bodyPart.ValueRO.ownerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
-                                            if(++batchCountRA > 100)
-                                            {
-                                                batchCountRA = 0;
-                                                await UniTask.Yield();
-                                            }
-                                        };
-                                        isResettingAll = false;
-                                        break;
-
-                                    case stringP:
-                                    case stringPush:
-                                        switch (commands[1].ToLower())
-                                        {
-                                            case stringHead:
-                                                part = SteveBodyPart.Head;
-                                                break;
-                                            case stringRightHand:
-                                            case stringRH:
-                                                part = SteveBodyPart.RightHand;
-                                                break;
-                                            case stringLeftHand:
-                                            case stringLH:
-                                                part = SteveBodyPart.LeftHand;
-                                                break;
-                                            case stringRightFoot:
-                                            case stringRF:
-                                                part = SteveBodyPart.RightFoot;
-                                                break;
-                                            case stringLeftFoot:
-                                            case stringLF:
-                                                part = SteveBodyPart.LeftFoot;
-                                                break;
-                                            default:
-                                                part = SteveBodyPart.Head;
-                                                break;
-                                        }
-                                        float3 force = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
-
-                                        new BodyPartsPushJob { targetPart = part, force = force, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
-                                        break;
-
-                                    case stringCreeper:
-                                        int spawnCount = 0;
-                                        try
-                                        {
-                                            spawnCount = int.Parse(commands[1]);
-                                        }
-                                        catch (IndexOutOfRangeException)
-                                        {
-                                            spawnCount = 1;
-                                        }
-                                        EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
-                                        for (int i = 0; i < spawnCount; i++)
-                                            new SpawnEntity { parallelWriter = ecb.AsParallelWriter(), targetEntity = store.creeper }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                            case stringL:
+                            case stringLoop:
+                                if (isUnkown) break;
+                                FixedString64Bytes commandName1 = commands[1];
+                                if (loopCommands.ContainsKey(userName))
+                                {
+                                    if (loopCommands[userName].ContainsKey(commandName1))
                                         break;
                                 }
-                            }
+                                else
+                                    loopCommands.TryAdd(userName, new Dictionary<FixedString64Bytes, CancellationTokenSource>());
+
+                                var loopCommandCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+
+                                Debug.Log($"루프명: {userName}-{commandName1}\r\n횟수: {commands[2]}, 간격: {commands[3]}");
+                                int maxCount = int.Parse(commands[2]);
+                                float delay = float.Parse(commands[3]);
+                                string remainCommands = commandSplitter + string.Join(commandSplitter, commandLines.SubArray(2, commandLines.Length - 2));
+                                int loopEndIndex = remainCommands.IndexOf('}');
+                                string targetCommands = remainCommands.Substring(0, loopEndIndex);
+                                commandLines = remainCommands.Substring(loopEndIndex).Split(commandSplitter);
+                                commandLineIndex = 0;
+                                loopCommands[userName].TryAdd(commandName1, loopCommandCTS);
+
+                                UniTask.RunOnThreadPool(async () =>
+                                {
+                                    await UniTask.Yield();
+                                    try
+                                    {
+                                        for (int count = 0; maxCount == -1 || count < maxCount; count++)
+                                        {
+                                            if (loopCommandCTS.IsCancellationRequested) return;
+                                            OnChat(userNameString, targetCommands, addValueLife, payAmount);
+                                            await UniTask.Delay(TimeSpan.FromSeconds(delay));
+                                            if (loopCommandCTS.IsCancellationRequested) return;
+                                        }
+                                    }
+                                    finally
+                                    {
+                                        loopCommands[userName].Remove(commandName1);
+                                    }
+                                }, true, loopCommandCTS.Token).Forget();
+                                break;
+
+                            case stringLS:
+                            case stringLoopStop:
+                                if (isUnkown) break;
+                                FixedString64Bytes commandName2 = commands[1];
+                                if (!loopCommands.ContainsKey(userName) || !loopCommands[userName].ContainsKey(commandName2)) return;
+                                loopCommands[userName]?[commandName2]?.Cancel();
+                                loopCommands[userName]?[commandName2]?.Dispose();
+                                loopCommands[userName]?.Remove(commandName2);
+                                break;
+
+                            case stringLSA:
+                            case stringLoopStopAll:
+                                if (isUnkown) break;
+                                foreach (var CTS in loopCommands[userName].Values)
+                                {
+                                    CTS?.Cancel();
+                                    CTS?.Dispose();
+                                }
+                                loopCommands[userName].Clear();
+                                break;
+
+                            case stringLSAA:
+                            case stringLoopStopAllAdmin:
+                                if (!isAdmin) break;
+                                foreach (var tempName in loopCommands.Keys)
+                                {
+                                    foreach (var CTS in loopCommands[tempName].Values)
+                                    {
+                                        CTS?.Cancel();
+                                        CTS?.Dispose();
+                                    }
+                                }
+                                loopCommands.Clear();
+                                break;
+
+                            case stringReset:
+                                foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
+                                {
+                                    var player = playerRef.ValueRO;
+                                    if (player.userName != userName) continue;
+
+                                    foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
+                                    {
+                                        if(bodyPart.ValueRO.ownerEntity == playerEntity)
+                                        {
+                                            rigidBodyAspect.Position = GameManager.instance.spawnTransform.position;
+                                            rigidBodyAspect.LinearVelocity *= 0;
+                                        }
+                                    };
+                                    //new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                }
+                                break;
+                            case stringRA:
+                            case stringResetAll:
+                                if (!isAdmin && payAmount == 0 || isResettingAll) break;
+                                isResettingAll = true;
+                                //int batchCountRA = 0;
+                                float3 spawnPoint = GameManager.instance.spawnTransform.position;
+
+                                new PlayerResetAllJob { spawnPoint = spawnPoint }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                /*foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
+                                {
+                                    rigidBodyAspect.Position = spawnPoint;
+                                    rigidBodyAspect.AngularVelocityLocalSpace *= 0;
+                                    rigidBodyAspect.LinearVelocity *= 0;
+                                    *//*if (++batchCountRA > 500)
+                                    {
+                                        batchCountRA = 0;
+                                        await UniTask.Yield();
+                                    }*//*
+                                };*/
+                                isResettingAll = false;
+                                break;
+
+                            case stringP:
+                            case stringPush:
+                                foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
+                                {
+                                    var player = playerRef.ValueRO;
+                                    if (player.userName != userName) continue;
+                                    switch (commands[1].ToLower())
+                                    {
+                                        case stringHead:
+                                            part = SteveBodyPart.Head;
+                                            break;
+                                        case stringRightHand:
+                                        case stringRH:
+                                            part = SteveBodyPart.RightHand;
+                                            break;
+                                        case stringLeftHand:
+                                        case stringLH:
+                                            part = SteveBodyPart.LeftHand;
+                                            break;
+                                        case stringRightFoot:
+                                        case stringRF:
+                                            part = SteveBodyPart.RightFoot;
+                                            break;
+                                        case stringLeftFoot:
+                                        case stringLF:
+                                            part = SteveBodyPart.LeftFoot;
+                                            break;
+                                        default:
+                                            part = SteveBodyPart.Head;
+                                            break;
+                                    }
+                                    float3 force = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
+
+                                    new BodyPartsPushJob { targetPart = part, force = force, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                }
+                                break;
+
+                            case stringCreeper:
+                                int spawnCount = 0;
+                                try
+                                {
+                                    spawnCount = int.Parse(commands[1]);
+                                }
+                                catch (IndexOutOfRangeException)
+                                {
+                                    spawnCount = 1;
+                                }
+                                foreach (var mainSpawnerTag in SystemAPI.Query<RefRO<MainSpawnerTag>>())
+                                {
+
+                                }
+                                float3 creeperSpawnPoint = GameManager.instance.spawnTransform.position;
+                                var creeperLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.creeper);
+                                creeperLocalTransform.Position = creeperSpawnPoint;
+                                EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+                                for (int i = 0; i < spawnCount; i++)
+                                {
+                                    Entity spawnedCreeper = ecb.Instantiate(store.creeper);
+                                    ecb.SetComponent(spawnedCreeper, creeperLocalTransform);
+
+                                    //new SpawnEntity { parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged).AsParallelWriter(), targetEntity = store.creeper }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                    if (i % 100 == 0)
+                                    {
+                                        await UniTask.Yield();
+                                        ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+                                    }
+                                }
+                                break;
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        Debug.LogException(ex);
-                        Debug.LogWarning("잘못된 명령어");
-                    }
                 }
-            };
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                Debug.LogWarning("잘못된 명령어");
+            }
 
             /*if (addValueLife != 0)
                 new OnChatSteveJob { hashID = hashID, addValue = addValueLife, peepoConfig = steveConfig.Value }.ScheduleParallel(CheckedStateRef.Dependency).Complete();*/
@@ -324,7 +388,7 @@ public partial class SteveEventSystem : SystemBase
         {
             //new OnBanJob { hashID = hashID }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
         };
-        OnSubscription = async (hashID, subMonth) =>
+        OnSubscription = (hashID, subMonth) =>
         {
             /*for (int i = 0; i < subMonth; i++)
             {
@@ -339,6 +403,7 @@ public partial class SteveEventSystem : SystemBase
 
     }
 
+    [BurstCompile]
     protected override void OnUpdate()
     {
     }
@@ -348,16 +413,15 @@ public partial class SteveEventSystem : SystemBase
         [ReadOnly] public Entity targetEntity;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
 
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in MainSpawnerTag mainSpawnerTag, in LocalTransform localTransform)
+        public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, in MainSpawnerTag mainSpawnerTag, in LocalTransform localTransform)
         {
-            Debug.Log("test");
             Entity spawnedEntity = parallelWriter.Instantiate(chunkIndex, targetEntity);
             var initTransform = new LocalTransform { Position = localTransform.Position, Rotation = localTransform.Rotation, Scale = 1 };
             parallelWriter.SetComponent(chunkIndex, spawnedEntity, initTransform);
         }
     }
     [BurstCompile]
-    partial struct PlayerInitJob : IJobEntity
+    partial struct PlayerNameTagJob : IJobEntity
     {
         [ReadOnly] public FixedString64Bytes userName;
         [ReadOnly] public Entity targetPlayerEntity;
@@ -396,7 +460,19 @@ public partial class SteveEventSystem : SystemBase
             {
                 rigidBodyAspect.Position = spawnPoint;
                 rigidBodyAspect.LinearVelocity *= 0;
+                rigidBodyAspect.AngularVelocityLocalSpace *= 0;
             }
+        }
+    }
+    [BurstCompile]
+    partial struct PlayerResetAllJob : IJobEntity
+    {
+        [ReadOnly] public float3 spawnPoint;
+        public void Execute(in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
+        {
+            rigidBodyAspect.Position = spawnPoint;
+            rigidBodyAspect.LinearVelocity *= 0;
+            rigidBodyAspect.AngularVelocityLocalSpace *= 0;
         }
     }
     [BurstCompile]
@@ -411,45 +487,6 @@ public partial class SteveEventSystem : SystemBase
                 rigidBodyAspect.LinearVelocity += force;
         }
     }
-    /*[BurstCompile]
-    partial struct OnChatSteveJob : IJobEntity
-    {
-        [ReadOnly] public int hashID;
-        [ReadOnly] public float addValue;
-        [ReadOnly] public SteveConfig peepoConfig;
-        public void Execute(ref TimeLimitedLifeComponent timeLimitedLifeComponent, in PlayerComponent playerComponent)
-        {
-            //Debug.Log("채팅");
-            if (hash.ID == hashID)
-                timeLimitedLifeComponent.lifeTime = math.clamp(timeLimitedLifeComponent.lifeTime + addValue, 0, peepoConfig.MaxLifeTime);
-        }
-    }
-
-    [BurstCompile]
-    partial struct SpawnDonationObjectJob : IJobEntity
-    {
-        [ReadOnly] public int hashID;
-        [ReadOnly] public Entity spawnObject;
-        [ReadOnly] public DonationConfig donationConfig;
-        public EntityCommandBuffer.ParallelWriter parallelWriter;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in LocalTransform peepoLocalTransform, ref RandomDataComponent randomDataComponent, ref PlayerComponent playerComponent)
-        {
-            if (hash.ID == hashID)
-            {
-                playerComponent.currentState = SteveState.Ragdoll;
-                Entity spawnedCheeze = parallelWriter.Instantiate(chunkIndex, spawnObject);
-                randomDataComponent.Random = new Unity.Mathematics.Random(randomDataComponent.Random.NextUInt(uint.MinValue, uint.MaxValue));
-                var initTransform = new LocalTransform { Position = peepoLocalTransform.Position, Rotation = quaternion.identity, Scale = randomDataComponent.Random.NextFloat(donationConfig.MinSize, donationConfig.MaxSize) };
-                var initVelocity = new PhysicsVelocity { Linear = new float3(randomDataComponent.Random.NextFloat(-5f, 5f), 0, 0) };
-                parallelWriter.SetComponent(chunkIndex, spawnedCheeze, initTransform);
-                parallelWriter.SetComponent(chunkIndex, spawnedCheeze, initVelocity);
-                parallelWriter.AddComponent(chunkIndex, spawnedCheeze, new TimeLimitedLifeComponent
-                {
-                    lifeTime = donationConfig.objectLifeTime
-                });
-            }
-        }
-    }*/
     [BurstCompile]
     partial struct SpawnDonationObjectUnknownJob : IJobEntity
     {
@@ -471,19 +508,4 @@ public partial class SteveEventSystem : SystemBase
             });
         }
     }
-
-    /*[BurstCompile]
-    public partial struct OnBanJob : IJobEntity
-    {
-        [ReadOnly] public int hashID;
-        public EntityCommandBuffer.ParallelWriter parallelWriter;
-
-        public void Execute(Entity entity, ref TimeLimitedLifeComponent timeLimitedLifeComponent, in HashIDComponent hash)
-        {
-            if (hash.ID == hashID)
-            {
-                timeLimitedLifeComponent.lifeTime = 0;
-            }
-        }
-    }*/
 }
