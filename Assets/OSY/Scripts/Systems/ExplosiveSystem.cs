@@ -1,3 +1,4 @@
+using DG.Tweening;
 using OSY;
 using Unity.Burst;
 using Unity.Collections;
@@ -9,36 +10,37 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
-partial struct ExplosiveSystem : ISystem, ISystemStartStop
+[BurstCompile]
+public partial class ExplosiveSystem : SystemBase
 {
     float3 float3One;
     EntityStoreComponent store;
 
     [BurstCompile]
-    public void OnCreate(ref SystemState state)
+    protected override void OnCreate()
     {
         float3One = new float3(1, 1, 1);
-        state.RequireForUpdate<EntityStoreComponent>();
+        CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
     }
 
     [BurstCompile]
-    public void OnStartRunning(ref SystemState state)
+    protected override void OnStartRunning()
     {
         store = SystemAPI.GetSingleton<EntityStoreComponent>();
     }
 
     [BurstCompile]
-    public void OnStopRunning(ref SystemState state)
+    protected override void OnStopRunning()
     {
     }
 
     [BurstCompile]
-    public void OnUpdate(ref SystemState state)
+    protected override void OnUpdate()
     {
 
-        new TimerJob { time = SystemAPI.Time, float3One = this.float3One }.ScheduleParallel(state.Dependency).Complete();
+        new TimerJob { time = SystemAPI.Time, float3One = this.float3One }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
 
-        EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+        EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
         foreach (var (explosiveRef, localTransformRef, entity) in SystemAPI.Query<RefRW<ExplosiveComponent>, RefRO<LocalTransform>>().WithEntityAccess())
         {
             ref var explosive = ref explosiveRef.ValueRW;
@@ -48,11 +50,15 @@ partial struct ExplosiveSystem : ISystem, ISystemStartStop
 
                 var particleEntity = ecb.Instantiate(store.particleExplosionWhite);
                 ecb.SetComponent(particleEntity, localTransformRef.ValueRO);
+                GameManager.instance.mainCam.DOComplete();
+                GameManager.instance.mainCam.DOShakePosition(1f, 4f, 10, 10).SetEase(Ease.OutExpo);
+                //GameManager.instance.mainCam.DOShakeRotation(2f, 10, 10, 90).SetEase(Ease.OutExpo);
 
-                new ExplosionJob { explosiveComponent = explosive, explosionPoint = localTransformRef.ValueRO.Position, self = entity, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(state.Dependency).Complete();
+                new ExplosionJob { explosiveComponent = explosive, explosionPoint = localTransformRef.ValueRO.Position, self = entity, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
             }
         }
     }
+
     [BurstCompile]
     partial struct TimerJob : IJobEntity
     {

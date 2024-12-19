@@ -354,7 +354,7 @@ public partial class SteveEventSystem : SystemBase
                                 var creeperLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.creeper);
                                 var creeperVelocity = EntityManager.GetComponentData<PhysicsVelocity>(store.creeper);
                                 creeperLocalTransform.Position = creeperSpawnPoint;
-                                creeperVelocity.Linear += new float3(0, 0, 20);
+                                creeperVelocity.Linear += new float3(0, 0, 2);
                                 EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
                                 for (int i = 0; i < spawnCount; i++)
                                 {

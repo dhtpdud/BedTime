@@ -235,8 +235,8 @@ public class GameManager : MonoBehaviour
             this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
             //chatInfos = new List<ChatInfo>();
             //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
-            nameTagTMP = nameTagObject.GetComponentInChildren<TMP_Text>();
-            nameTagBackground = nameTagObject.GetComponentInParent<Image>();
+            nameTagTMP = nameTagObject.GetComponentInChildren<TMP_Text>(true);
+            nameTagBackground = nameTagObject.GetComponentInParent<Image>(true);
             nameTagTMP.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
             //Debug.Log(nicknameColor.ToHexString());
 

@@ -15,5 +15,9 @@ class ExplosiveAuthoringBaker : Baker<ExplosiveAuthoring>
     {
         Entity entity = GetEntity(authoring.gameObject, TransformUsageFlags.Dynamic);
         AddComponent(entity, new ExplosiveComponent { isEnable = authoring.isEnable, range = authoring.range, power = authoring.power, time = authoring.maxTime, maxTime = authoring.maxTime });
+        AddComponent(entity, new RandomDataComponent
+        {
+            Random = new Unity.Mathematics.Random((uint)Random.Range(int.MinValue, int.MaxValue))
+        });
     }
 }
