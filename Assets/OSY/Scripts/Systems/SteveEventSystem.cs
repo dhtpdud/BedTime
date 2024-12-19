@@ -93,7 +93,7 @@ public partial class SteveEventSystem : SystemBase
 
         var initPlayerComponent = new PlayerComponent { currentState = SteveState.Ragdoll };
         var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
-        initPlayerLocalTransform.Position = GameManager.instance.spawnTransform.position;
+        initPlayerLocalTransform.Position = GameManager.instance.palyerSpawnTransform.position;
         //new LocalTransform { Position = GameManager.instance.spawnTransform.position, Rotation = quaternion.Euler(0, 180, 0), Scale = 1 };
 
         OnSpawn = async (userNameString) =>
@@ -274,7 +274,7 @@ public partial class SteveEventSystem : SystemBase
                                     {
                                         if(bodyPart.ValueRO.ownerEntity == playerEntity)
                                         {
-                                            rigidBodyAspect.Position = GameManager.instance.spawnTransform.position;
+                                            rigidBodyAspect.Position = GameManager.instance.palyerSpawnTransform.position;
                                             rigidBodyAspect.LinearVelocity *= 0;
                                         }
                                     };
@@ -286,7 +286,7 @@ public partial class SteveEventSystem : SystemBase
                                 if (!isAdmin && payAmount == 0 || isResettingAll) break;
                                 isResettingAll = true;
                                 //int batchCountRA = 0;
-                                float3 spawnPoint = GameManager.instance.spawnTransform.position;
+                                float3 spawnPoint = GameManager.instance.palyerSpawnTransform.position;
 
                                 new PlayerResetAllJob { spawnPoint = spawnPoint }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
                                 /*foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
@@ -350,18 +350,17 @@ public partial class SteveEventSystem : SystemBase
                                 {
                                     spawnCount = 1;
                                 }
-                                foreach (var mainSpawnerTag in SystemAPI.Query<RefRO<MainSpawnerTag>>())
-                                {
-
-                                }
-                                float3 creeperSpawnPoint = GameManager.instance.spawnTransform.position;
+                                float3 creeperSpawnPoint = GameManager.instance.screenSpawnTransform.position;
                                 var creeperLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.creeper);
+                                var creeperVelocity = EntityManager.GetComponentData<PhysicsVelocity>(store.creeper);
                                 creeperLocalTransform.Position = creeperSpawnPoint;
+                                creeperVelocity.Linear += new float3(0, 0, 20);
                                 EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
                                 for (int i = 0; i < spawnCount; i++)
                                 {
                                     Entity spawnedCreeper = ecb.Instantiate(store.creeper);
                                     ecb.SetComponent(spawnedCreeper, creeperLocalTransform);
+                                    ecb.SetComponent(spawnedCreeper, creeperVelocity);
 
                                     //new SpawnEntity { parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged).AsParallelWriter(), targetEntity = store.creeper }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
                                     if (i % 100 == 0)

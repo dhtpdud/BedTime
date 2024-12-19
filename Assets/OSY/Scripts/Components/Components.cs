@@ -95,6 +95,8 @@ public struct EntityStoreComponent : IComponentData
 {
     public Entity steve;
     public Entity creeper;
+    public Entity particleExplosionWhite;
+    public Entity particleExplosionBlack;
 }
 public struct SpawnerComponent : IComponentData
 {

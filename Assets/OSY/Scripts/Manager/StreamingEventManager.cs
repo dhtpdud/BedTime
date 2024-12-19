@@ -114,6 +114,8 @@ public class StreamingEventManager : MonoBehaviour
                     await Utils.YieldCaches.UniTaskYield;
                     await Utils.YieldCaches.UniTaskYield;
                 }
+                else
+                    GameManager.instance.viewerInfos[userNameComponent].UpdateNameTag().Forget();
                 addLifeTime = payAmount > 0 ? GameManager.instance.peepoConfig.addLifeTime : 86400;
 
                 SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount);
@@ -187,6 +189,9 @@ public class StreamingEventManager : MonoBehaviour
                     await Utils.YieldCaches.UniTaskYield;
                     await Utils.YieldCaches.UniTaskYield;
                 }
+                else
+                    GameManager.instance.viewerInfos[userNameComponent].UpdateNameTag().Forget();
+
                 addLifeTime = payAmount > 0 ? GameManager.instance.peepoConfig.addLifeTime : 86400;
 
                 SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount);

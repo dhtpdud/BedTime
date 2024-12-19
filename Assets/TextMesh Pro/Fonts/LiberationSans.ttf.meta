@@ -17,10 +17,3 @@ TrueTypeFontImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-AssetOrigin:
-  serializedVersion: 1
-  productId: 241472
-  packageName: Rukhanka - ECS Animation System
-  packageVersion: 1.9.2
-  assetPath: Packages/com.rukhanka.animation/Samples~/Samples/TextMesh Pro/Fonts/LiberationSans.ttf
-  uploadId: 706158

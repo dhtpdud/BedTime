@@ -31,6 +31,7 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
             if (GameManager.instance?.nameTagUICanvasTransform != null && GameManager.instance.nameTagUICanvasTransform.gameObject.activeInHierarchy && GameManager.instance.viewerInfos != null)
                 if (GameManager.instance.viewerInfos.ContainsKey(username))
                 {
+                    if (!GameManager.instance.viewerInfos[username].isEnable) continue;
                     RectTransform bubbleTransform = (RectTransform)GameManager.instance?.viewerInfos[username]?.nameTagObject?.transform;
                     if (bubbleTransform != null)
                     {

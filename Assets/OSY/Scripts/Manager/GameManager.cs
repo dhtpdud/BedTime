@@ -1,12 +1,17 @@
+using Cysharp.Threading.Tasks;
+using Cysharp.Threading.Tasks.Triggers;
 using OSY;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
@@ -80,7 +85,8 @@ public class GameManager : MonoBehaviour
     }
 
 
-    public Transform spawnTransform;
+    public Transform palyerSpawnTransform;
+    public Transform screenSpawnTransform;
     [Serializable]
     public class SteveConfig
     {
@@ -219,19 +225,46 @@ public class GameManager : MonoBehaviour
         /*public GameObject chatBubbleObjects;
         public List<ChatInfo> chatInfos;*/
         public GameObject nameTagObject;
+        public TMP_Text nameTagTMP;
+        public Image nameTagBackground;
+        public bool isEnable;
+
+        public CancellationTokenSource UpdateCTS;
         public ViewerInfo(string displayName, int subscribeMonth = 0)
         {
             this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
             //chatInfos = new List<ChatInfo>();
             //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
-            var tmp = nameTagObject.GetComponentInChildren<TMP_Text>();
-
-            if (displayName.Contains(GameManager.instance.nameSpliter))
-                displayName = displayName.Split(GameManager.instance.nameSpliter)[1];
-
-            tmp.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
+            nameTagTMP = nameTagObject.GetComponentInChildren<TMP_Text>();
+            nameTagBackground = nameTagObject.GetComponentInParent<Image>();
+            nameTagTMP.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
             //Debug.Log(nicknameColor.ToHexString());
-            tmp.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0) : Color.white;
+
+            UpdateNameTag().Forget();
+        }
+        public async UniTask UpdateNameTag()
+        {
+            if(UpdateCTS != null && !UpdateCTS.IsCancellationRequested)
+            {
+                UpdateCTS?.Cancel();
+                UpdateCTS?.Dispose();
+                await UniTask.Yield();
+            }
+            UpdateCTS = CancellationTokenSource.CreateLinkedTokenSource(nameTagTMP.destroyCancellationToken);
+            UniTask.RunOnThreadPool(UpdateNameTagTask, true, UpdateCTS.Token).Forget();
+        }
+        private async UniTask UpdateNameTagTask()
+        {
+            await UniTask.SwitchToMainThread();
+            isEnable = true;
+            nameTagBackground.color = new Color(0, 0, 0, 0.6f);
+            nameTagTMP.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0, 1) : Color.white;
+            Debug.Log("test1");
+            await UniTask.Delay(TimeSpan.FromSeconds(3), true, PlayerLoopTiming.Update, UpdateCTS.Token, true);
+            Debug.Log("test2");
+            nameTagTMP.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
+            nameTagBackground.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
+            isEnable = false;
         }
         /*public void OnDestroy()
         {
@@ -247,19 +280,6 @@ public class GameManager : MonoBehaviour
     }
     //캐싱 변수
     public Dictionary<FixedString64Bytes, ViewerInfo> viewerInfos = new Dictionary<FixedString64Bytes, ViewerInfo>();
-
-    /*public struct SpawnOrder
-    {
-        public int hash;
-        public float3 initForce;
-
-        public SpawnOrder(int hash, float3 initForce)
-        {
-            this.hash = hash;
-            this.initForce = initForce;
-        }
-    }
-    public Queue<SpawnOrder> spawnOrderQueue = new Queue<SpawnOrder>();*/
 
     public Vector2 onMouseDownPosition;
     public Vector2 onMouseDragPosition;

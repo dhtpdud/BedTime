@@ -1,5 +1,4 @@
 using OSY;
-using System.Security.Principal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Core;
@@ -10,18 +9,33 @@ using Unity.Rendering;
 using Unity.Transforms;
 using UnityEngine;
 
-partial struct ExplosiveSystem : ISystem
+partial struct ExplosiveSystem : ISystem, ISystemStartStop
 {
     float3 float3One;
+    EntityStoreComponent store;
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         float3One = new float3(1, 1, 1);
+        state.RequireForUpdate<EntityStoreComponent>();
     }
+
+    [BurstCompile]
+    public void OnStartRunning(ref SystemState state)
+    {
+        store = SystemAPI.GetSingleton<EntityStoreComponent>();
+    }
+
+    [BurstCompile]
+    public void OnStopRunning(ref SystemState state)
+    {
+    }
+
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+
         new TimerJob { time = SystemAPI.Time, float3One = this.float3One }.ScheduleParallel(state.Dependency).Complete();
 
         EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
@@ -31,6 +45,10 @@ partial struct ExplosiveSystem : ISystem
             if (explosive.isEnable && explosive.time <= 0)
             {
                 explosive.isEnable = false;
+
+                var particleEntity = ecb.Instantiate(store.particleExplosionWhite);
+                ecb.SetComponent(particleEntity, localTransformRef.ValueRO);
+
                 new ExplosionJob { explosiveComponent = explosive, explosionPoint = localTransformRef.ValueRO.Position, self = entity, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(state.Dependency).Complete();
             }
         }
