@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.kyub.emojisearch": "https://github.com/calumma-robert/com.kyub.emojisearch.git",
     "com.unity.cinemachine": "2.10.3",
     "com.unity.collab-proxy": "2.6.0",
     "com.unity.entities": "1.3.8",

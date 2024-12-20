@@ -27,7 +27,7 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
         {
             float3 position = localTransform.ValueRO.Position;
             float2 maxVal = topRightScreenPoint;
-            FixedString64Bytes username = nameTagComponent.ValueRO.name;
+            FixedString128Bytes username = nameTagComponent.ValueRO.name;
             if (GameManager.instance?.nameTagUICanvasTransform != null && GameManager.instance.nameTagUICanvasTransform.gameObject.activeInHierarchy && GameManager.instance.viewerInfos != null)
                 if (GameManager.instance.viewerInfos.ContainsKey(username))
                 {
@@ -85,7 +85,7 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
         {
             float3 position = localTransform.Position;
             float2 maxVal = topRightScreenPoint;
-            FixedString64Bytes username = nameTagComponent.name;
+            FixedString128Bytes username = nameTagComponent.name;
             UniTask.RunOnThreadPool(async () =>
             {
                 await UniTask.SwitchToMainThread();

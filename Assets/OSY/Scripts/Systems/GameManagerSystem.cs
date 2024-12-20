@@ -75,6 +75,7 @@ public sealed partial class GameManagerInfoSystem : SystemBase
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        //peepoConfigRef.Dispose();
+        peepoConfigRef.Dispose();
+        donationConfigRef.Dispose();
     }
 }

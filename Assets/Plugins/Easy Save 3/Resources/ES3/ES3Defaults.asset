@@ -33,6 +33,7 @@ MonoBehaviour:
     - Assembly-CSharp
     - Assembly-CSharp-firstpass
     - Cinemachine
+    - Kyub.EmojiSearch
     - Rukhanka.DebugDrawer
     - Rukhanka.Hybrid
     - Rukhanka.Runtime

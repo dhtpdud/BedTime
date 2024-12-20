@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using Cysharp.Threading.Tasks.Triggers;
 using OSY;
 using System;
 using System.Collections.Generic;
@@ -8,7 +7,6 @@ using TMPro;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Profiling;
 using UnityEngine.UI;
@@ -16,10 +14,16 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
+    public int MaxPlayerCount;
+    public int playerCount;
+    public int MaxParticleCount;
+    public int particleCount;
     public GameManagerInfoSystem gameManagerSystem;
     public Camera mainCam;
     public int targetFPS = 60;
-    public string nameSpliter = "!:";
+    public const string nameSpliter = "!:";
+    public const string kingEmoji = "\U0001F451";
+    public const string stringZero = "0";
 
     //캐싱용 변수
     public float deltaTime { get; private set; }
@@ -169,6 +173,8 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public Canvas rootCanvas;
+    public Transform leaderBodard;
+    public GameObject playerBoardPrefab;
     public Transform nameTagUICanvasTransform;
     public Transform chatBubbleUICanvasTransform;
     //public Transform unknownDonationParentsTransform;
@@ -221,17 +227,25 @@ public class GameManager : MonoBehaviour
     }*/
     public class ViewerInfo
     {
+        public string name;
         public int subscribeMonth;
         /*public GameObject chatBubbleObjects;
         public List<ChatInfo> chatInfos;*/
         public GameObject nameTagObject;
         public TMP_Text nameTagTMP;
         public Image nameTagBackground;
+
+        public GameObject playerBoard;
+        public Transform playerBoardTrans;
+        public TMP_Text playerBoardTMP;
+
         public bool isEnable;
 
         public CancellationTokenSource UpdateCTS;
         public ViewerInfo(string displayName, int subscribeMonth = 0)
         {
+            this.name = displayName;
+            this.subscribeMonth = subscribeMonth;
             this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
             //chatInfos = new List<ChatInfo>();
             //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
@@ -240,11 +254,20 @@ public class GameManager : MonoBehaviour
             nameTagTMP.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
             //Debug.Log(nicknameColor.ToHexString());
 
+            this.playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodard);
+            playerBoardTrans = this.playerBoard.transform;
+            playerBoardTMP = playerBoard.GetComponentInChildren<TMP_Text>();
+            UpdatePlayerBoardScore(stringZero);
             UpdateNameTag().Forget();
+        }
+        public void UpdatePlayerBoardScore(string score)
+        {
+            var rank = playerBoardTrans.GetSiblingIndex() + 1;
+            this.playerBoardTMP.text = $"{rank}. {(rank == 1 ? kingEmoji : string.Empty)}{name}\nScore:{score}";
         }
         public async UniTask UpdateNameTag()
         {
-            if(UpdateCTS != null && !UpdateCTS.IsCancellationRequested)
+            if (UpdateCTS != null && !UpdateCTS.IsCancellationRequested)
             {
                 UpdateCTS?.Cancel();
                 UpdateCTS?.Dispose();
@@ -257,29 +280,29 @@ public class GameManager : MonoBehaviour
         {
             await UniTask.SwitchToMainThread();
             isEnable = true;
+
+
             nameTagBackground.color = new Color(0, 0, 0, 0.6f);
             nameTagTMP.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0, 1) : Color.white;
-            Debug.Log("test1");
             await UniTask.Delay(TimeSpan.FromSeconds(3), true, PlayerLoopTiming.Update, UpdateCTS.Token, true);
-            Debug.Log("test2");
             nameTagTMP.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
             nameTagBackground.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
             isEnable = false;
         }
-        /*public void OnDestroy()
+        public void OnDestroy(FixedString128Bytes name)
         {
             UniTask.RunOnThreadPool(async () =>
             {
                 await UniTask.SwitchToMainThread();
-                chatInfos.Clear();
+                //chatInfos.Clear();
                 Destroy(nameTagObject);
                 await Utils.YieldCaches.UniTaskYield;
-                GameManager.instance.viewerInfos.Remove(Animator.StringToHash(nickName));
+                GameManager.instance.viewerInfos.Remove(name);
             }, true, GameManager.instance.destroyCancellationToken).Forget();
-        }*/
+        }
     }
     //캐싱 변수
-    public Dictionary<FixedString64Bytes, ViewerInfo> viewerInfos = new Dictionary<FixedString64Bytes, ViewerInfo>();
+    public Dictionary<FixedString128Bytes, ViewerInfo> viewerInfos = new Dictionary<FixedString128Bytes, ViewerInfo>();
 
     public Vector2 onMouseDownPosition;
     public Vector2 onMouseDragPosition;

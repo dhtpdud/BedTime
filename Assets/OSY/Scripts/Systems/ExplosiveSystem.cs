@@ -1,5 +1,7 @@
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using OSY;
+using System;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Core;
@@ -41,6 +43,8 @@ public partial class ExplosiveSystem : SystemBase
         new TimerJob { time = SystemAPI.Time, float3One = this.float3One }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
 
         EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+
+        int explosionsCount = AudioManager.instance.explosions.Count;
         foreach (var (explosiveRef, localTransformRef, entity) in SystemAPI.Query<RefRW<ExplosiveComponent>, RefRO<LocalTransform>>().WithEntityAccess())
         {
             ref var explosive = ref explosiveRef.ValueRW;
@@ -48,10 +52,25 @@ public partial class ExplosiveSystem : SystemBase
             {
                 explosive.isEnable = false;
 
-                var particleEntity = ecb.Instantiate(store.particleExplosionWhite);
-                ecb.SetComponent(particleEntity, localTransformRef.ValueRO);
+                if (GameManager.instance.particleCount < GameManager.instance.MaxParticleCount)
+                {
+                    var particleEntity = ecb.Instantiate(store.particleExplosionWhite);
+                    var tempTransform = localTransformRef.ValueRO;
+                    tempTransform.Rotation = Quaternion.identity;
+                    ecb.SetComponent(particleEntity, tempTransform);
+                    lock (GameManager.instance)
+                        GameManager.instance.particleCount++;
+                    UniTask.RunOnThreadPool(async () =>
+                    {
+                        await UniTask.Delay(TimeSpan.FromSeconds(4));
+                        lock (GameManager.instance)
+                            GameManager.instance.particleCount--;
+                    }, true, GameManager.instance.destroyCancellationToken).Forget();
+                }
+
                 GameManager.instance.mainCam.DOComplete();
                 GameManager.instance.mainCam.DOShakePosition(1f, 4f, 10, 10).SetEase(Ease.OutExpo);
+                AudioManager.instance.audioSource.PlayOneShot(AudioManager.instance.explosions[UnityEngine.Random.Range(0, explosionsCount - 1)]);
                 //GameManager.instance.mainCam.DOShakeRotation(2f, 10, 10, 90).SetEase(Ease.OutExpo);
 
                 new ExplosionJob { explosiveComponent = explosive, explosionPoint = localTransformRef.ValueRO.Position, self = entity, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();

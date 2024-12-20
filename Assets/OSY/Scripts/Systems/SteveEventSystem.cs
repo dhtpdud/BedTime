@@ -12,13 +12,15 @@ using Unity.Physics;
 using Unity.Physics.Aspects;
 using Unity.Transforms;
 using UnityEngine;
+using UnityEngine.XR;
 using WebSocketSharp;
+using static GameManager;
 
 [BurstCompile]
 public partial class SteveEventSystem : SystemBase
 {
     #region string Ä³½Ì
-    public List<FixedString64Bytes> adminNames = new List<FixedString64Bytes>();
+    public List<FixedString128Bytes> adminNames = new List<FixedString128Bytes>();
 
     public const string stringP = "p";
     public const string stringPush = "push";
@@ -47,14 +49,30 @@ public partial class SteveEventSystem : SystemBase
     public const string stringCreeper = "creeper";
 
     public const string stringHead = "head";
+    public const string stringChest = "chest";
+    public const string stringSpine = "spine";
+
+    public const string stringRightUpperArm = "rightUpperArm";
+    public const string stringRUA = "rua";
     public const string stringRightHand = "righthand";
     public const string stringRH = "rh";
+
+    public const string stringLeftUpperArm = "leftUpperArm";
+    public const string stringLUA = "lua";
     public const string stringLeftHand = "lefthand";
     public const string stringLH = "lh";
+
+    public const string stringRightThigh = "rightthigh";
+    public const string stringRT = "rt";
     public const string stringRightFoot = "rightfoot";
     public const string stringRF = "rf";
+
+    public const string stringLeftThigh = "leftthigh";
+    public const string stringLT = "lt";
     public const string stringLeftFoot = "leftfoot";
     public const string stringLF = "lf";
+
+    public const string stringALL = "all";
 
 
     public const string commandSplitter = "//";
@@ -71,7 +89,7 @@ public partial class SteveEventSystem : SystemBase
     BlobAssetReference<DonationConfig> donationConfig;*/
     TimeData timeData;
 
-    Dictionary<FixedString64Bytes, Dictionary<FixedString64Bytes, CancellationTokenSource>> loopCommands = new Dictionary<FixedString64Bytes, Dictionary<FixedString64Bytes, CancellationTokenSource>>();
+    Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>> loopCommands = new Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>>();
 
     EntityStoreComponent store;
 
@@ -93,23 +111,30 @@ public partial class SteveEventSystem : SystemBase
 
         var initPlayerComponent = new PlayerComponent { currentState = SteveState.Ragdoll };
         var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
+        var initLife = new TimeLimitedLifeComponent { lifeTime = 86400 };
         initPlayerLocalTransform.Position = GameManager.instance.palyerSpawnTransform.position;
         //new LocalTransform { Position = GameManager.instance.spawnTransform.position, Rotation = quaternion.Euler(0, 180, 0), Scale = 1 };
 
         OnSpawn = async (userNameString) =>
         {
-            FixedString64Bytes userName = new FixedString64Bytes(userNameString);
+            lock (GameManager.instance)
+                GameManager.instance.playerCount++;
+
+            FixedString128Bytes userName = new FixedString128Bytes(userNameString);
             EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
 
             Entity spawnedPlayer = ecb.Instantiate(store.steve);
             initPlayerComponent.userName = userName;
             ecb.SetComponent(spawnedPlayer, initPlayerComponent);
             ecb.SetComponent(spawnedPlayer, initPlayerLocalTransform);
+            ecb.AddComponent(spawnedPlayer, initLife);
 
             await UniTask.Yield();
             await UniTask.Yield();
 
             ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+
+
             foreach (var (playerRef, entity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
             {
                 if(playerRef.ValueRO.userName == userName)
@@ -121,13 +146,17 @@ public partial class SteveEventSystem : SystemBase
             int cheezeCount = (int)(payAmount * 1/*donationConfig.Value.objectCountFactor*/);
             bool isUnkown = userNameString == null || userNameString == string.Empty;
             bool isAdmin = false;
-            FixedString64Bytes userName = string.Empty;
+            FixedString128Bytes userName = string.Empty;
             if (!isUnkown)
             {
-                userName = new FixedString64Bytes(userNameString);
+                userName = new FixedString128Bytes(userNameString);
                 isAdmin = adminNames.Contains(userName);
             }
-
+            foreach (var (playerInfoRef, lifeRef) in SystemAPI.Query<RefRO<PlayerComponent>, RefRW<TimeLimitedLifeComponent>>())
+            {
+                if(playerInfoRef.ValueRO.userName == userName)
+                    lifeRef.ValueRW.lifeTime = 86400;
+            }
             try
             {
                 Debug.Log(userName +": "+ text);
@@ -188,14 +217,14 @@ public partial class SteveEventSystem : SystemBase
                             case stringL:
                             case stringLoop:
                                 if (isUnkown) break;
-                                FixedString64Bytes commandName1 = commands[1];
+                                FixedString128Bytes commandName1 = commands[1];
                                 if (loopCommands.ContainsKey(userName))
                                 {
                                     if (loopCommands[userName].ContainsKey(commandName1))
                                         break;
                                 }
                                 else
-                                    loopCommands.TryAdd(userName, new Dictionary<FixedString64Bytes, CancellationTokenSource>());
+                                    loopCommands.TryAdd(userName, new Dictionary<FixedString128Bytes, CancellationTokenSource>());
 
                                 var loopCommandCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
 
@@ -203,7 +232,7 @@ public partial class SteveEventSystem : SystemBase
                                 int maxCount = int.Parse(commands[2]);
                                 float delay = float.Parse(commands[3]);
                                 string remainCommands = commandSplitter + string.Join(commandSplitter, commandLines.SubArray(2, commandLines.Length - 2));
-                                int loopEndIndex = remainCommands.IndexOf('}');
+                                int loopEndIndex = remainCommands.IndexOf(';');
                                 string targetCommands = remainCommands.Substring(0, loopEndIndex);
                                 commandLines = remainCommands.Substring(loopEndIndex).Split(commandSplitter);
                                 commandLineIndex = 0;
@@ -232,7 +261,7 @@ public partial class SteveEventSystem : SystemBase
                             case stringLS:
                             case stringLoopStop:
                                 if (isUnkown) break;
-                                FixedString64Bytes commandName2 = commands[1];
+                                FixedString128Bytes commandName2 = commands[1];
                                 if (!loopCommands.ContainsKey(userName) || !loopCommands[userName].ContainsKey(commandName2)) return;
                                 loopCommands[userName]?[commandName2]?.Cancel();
                                 loopCommands[userName]?[commandName2]?.Dispose();
@@ -265,41 +294,44 @@ public partial class SteveEventSystem : SystemBase
                                 break;
 
                             case stringReset:
-                                foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRO<PlayerComponent>>().WithEntityAccess())
+                                foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRW<PlayerComponent>>().WithEntityAccess())
                                 {
                                     var player = playerRef.ValueRO;
                                     if (player.userName != userName) continue;
-
+                                    playerRef.ValueRW.score = 0;
+                                    GameManager.instance.viewerInfos[userName].UpdatePlayerBoardScore(GameManager.stringZero);
+                                    var playerInfo = GameManager.instance.viewerInfos[userName];
+                                    playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{userName}\n[{playerInfo.subscribeMonth}Month]\nScore:0" : $"{userName}\nScore:0";
                                     foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
                                     {
-                                        if(bodyPart.ValueRO.ownerEntity == playerEntity)
+                                        if (bodyPart.ValueRO.ownerEntity == playerEntity)
                                         {
                                             rigidBodyAspect.Position = GameManager.instance.palyerSpawnTransform.position;
                                             rigidBodyAspect.LinearVelocity *= 0;
                                         }
                                     };
-                                    //new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
                                 }
+                                //new PlayerResetJob { spawnPoint = GameManager.instance.spawnTransform.position, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
                                 break;
                             case stringRA:
                             case stringResetAll:
                                 if (!isAdmin && payAmount == 0 || isResettingAll) break;
                                 isResettingAll = true;
-                                //int batchCountRA = 0;
+                                int batchCountRA = 0;
                                 float3 spawnPoint = GameManager.instance.palyerSpawnTransform.position;
 
-                                new PlayerResetAllJob { spawnPoint = spawnPoint }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
-                                /*foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
+                                //new PlayerResetAllJob { spawnPoint = spawnPoint }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
                                 {
                                     rigidBodyAspect.Position = spawnPoint;
                                     rigidBodyAspect.AngularVelocityLocalSpace *= 0;
                                     rigidBodyAspect.LinearVelocity *= 0;
-                                    *//*if (++batchCountRA > 500)
+                                    if (++batchCountRA > 500)
                                     {
                                         batchCountRA = 0;
                                         await UniTask.Yield();
-                                    }*//*
-                                };*/
+                                    }
+                                };
                                 isResettingAll = false;
                                 break;
 
@@ -309,32 +341,61 @@ public partial class SteveEventSystem : SystemBase
                                 {
                                     var player = playerRef.ValueRO;
                                     if (player.userName != userName) continue;
+
+                                    float3 force = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
                                     switch (commands[1].ToLower())
                                     {
                                         case stringHead:
                                             part = SteveBodyPart.Head;
                                             break;
+                                        case stringChest:
+                                            part = SteveBodyPart.Chest;
+                                            break;
+                                        case stringSpine:
+                                            part = SteveBodyPart.Spine;
+                                            break;
+
+                                        case stringRightUpperArm:
+                                        case stringRA:
+                                            part = SteveBodyPart.RightUpperArm;
+                                            break;
                                         case stringRightHand:
                                         case stringRH:
                                             part = SteveBodyPart.RightHand;
+                                            break;
+
+                                        case stringLeftUpperArm:
+                                        case stringLUA:
+                                            part = SteveBodyPart.LeftUpperArm;
                                             break;
                                         case stringLeftHand:
                                         case stringLH:
                                             part = SteveBodyPart.LeftHand;
                                             break;
+
+                                        case stringRightThigh:
+                                        case stringRT:
+                                            part = SteveBodyPart.RightThigh;
+                                            break;
                                         case stringRightFoot:
                                         case stringRF:
                                             part = SteveBodyPart.RightFoot;
+                                            break;
+
+                                        case stringLeftThigh:
+                                        case stringLT:
+                                            part = SteveBodyPart.LeftThigh;
                                             break;
                                         case stringLeftFoot:
                                         case stringLF:
                                             part = SteveBodyPart.LeftFoot;
                                             break;
+
+                                        case stringALL:
                                         default:
-                                            part = SteveBodyPart.Head;
-                                            break;
+                                            new BodyPartsPushAllJob { force = force, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                                            continue;
                                     }
-                                    float3 force = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
 
                                     new BodyPartsPushJob { targetPart = part, force = force, targetEntity = playerEntity }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
                                 }
@@ -350,6 +411,8 @@ public partial class SteveEventSystem : SystemBase
                                 {
                                     spawnCount = 1;
                                 }
+                                if(!isAdmin && spawnCount > 2000)
+                                    spawnCount = 2000;
                                 float3 creeperSpawnPoint = GameManager.instance.screenSpawnTransform.position;
                                 var creeperLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.creeper);
                                 var creeperVelocity = EntityManager.GetComponentData<PhysicsVelocity>(store.creeper);
@@ -358,6 +421,7 @@ public partial class SteveEventSystem : SystemBase
                                 EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
                                 for (int i = 0; i < spawnCount; i++)
                                 {
+                                    AudioManager.instance.audioSource.PlayOneShot(AudioManager.instance.creeperTrigger);
                                     Entity spawnedCreeper = ecb.Instantiate(store.creeper);
                                     ecb.SetComponent(spawnedCreeper, creeperLocalTransform);
                                     ecb.SetComponent(spawnedCreeper, creeperVelocity);
@@ -422,14 +486,14 @@ public partial class SteveEventSystem : SystemBase
     [BurstCompile]
     partial struct PlayerNameTagJob : IJobEntity
     {
-        [ReadOnly] public FixedString64Bytes userName;
+        [ReadOnly] public FixedString128Bytes userName;
         [ReadOnly] public Entity targetPlayerEntity;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
         public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, in BodyPartComponent bodyPart)
         {
             if (bodyPart.ownerEntity == default) return;
             if (bodyPart.partType == SteveBodyPart.Head && bodyPart.ownerEntity == targetPlayerEntity)
-                parallelWriter.AddComponent<NameTagComponent>(chunkIndex, entity, new NameTagComponent { name = userName });
+                parallelWriter.AddComponent(chunkIndex, entity, new NameTagComponent { name = userName });
 
         }
     }
@@ -483,6 +547,18 @@ public partial class SteveEventSystem : SystemBase
         public void Execute(in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
         {
             if (bodyPartComponent.ownerEntity == targetEntity && bodyPartComponent.partType == targetPart)
+                rigidBodyAspect.LinearVelocity += force;
+        }
+    }
+
+    [BurstCompile]
+    partial struct BodyPartsPushAllJob : IJobEntity
+    {
+        [ReadOnly] public Entity targetEntity;
+        [ReadOnly] public float3 force;
+        public void Execute(in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
+        {
+            if (bodyPartComponent.ownerEntity == targetEntity)
                 rigidBodyAspect.LinearVelocity += force;
         }
     }

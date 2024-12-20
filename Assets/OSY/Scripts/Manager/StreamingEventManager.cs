@@ -106,6 +106,7 @@ public class StreamingEventManager : MonoBehaviour
 
                 if (isInit)
                 {
+                    if (GameManager.instance.playerCount > GameManager.instance.MaxPlayerCount) return;
                     GameManager.instance.viewerInfos.Add(userNameComponent, new GameManager.ViewerInfo(userNameComponent, subMonth));
                     /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
@@ -130,14 +131,14 @@ public class StreamingEventManager : MonoBehaviour
             YoutubeUnity.instance.OnChatEvent = async (chatInfo) =>
             {
                 await UniTask.SwitchToMainThread();
-                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
+                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.nameSpliter}{chatInfo.authorDetails.displayName}");
                 await OnInit(chatInfo.authorDetails, chatInfo.snippet.displayMessage, SteveEventSystemHandle);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, chatInfo.snippet.displayMessage, 5f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
             YoutubeUnity.instance.OnSuperChatEvent = async (chatInfo) =>
             {
                 await UniTask.SwitchToMainThread();
-                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
+                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.nameSpliter}{chatInfo.authorDetails.displayName}");
                 await OnInit(chatInfo.authorDetails, chatInfo.snippet.displayMessage, SteveEventSystemHandle, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
                 //SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
 
@@ -147,7 +148,7 @@ public class StreamingEventManager : MonoBehaviour
             YoutubeUnity.instance.OnSuperStickerEvent = async (chatInfo) =>
             {
                 await UniTask.SwitchToMainThread();
-                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
+                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.nameSpliter}{chatInfo.authorDetails.displayName}");
                 await OnInit(chatInfo.authorDetails, chatInfo.snippet.displayMessage, SteveEventSystemHandle, int.Parse(Regex.Replace(chatInfo.snippet.superChatDetails.amountDisplayString, @"\D", "")));
                 //SteveEventSystemHandle.OnDonation.Invoke(hash, int.Parse(Regex.Replace(chatInfo.snippet.superStickerDetails.amountDisplayString, @"\D", "")));
 
@@ -157,7 +158,7 @@ public class StreamingEventManager : MonoBehaviour
             YoutubeUnity.instance.OnNewSponsorEvent = async (chatInfo) =>
             {
                 await UniTask.SwitchToMainThread();
-                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
+                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.nameSpliter}{chatInfo.authorDetails.displayName}");
                 await OnInit(chatInfo.authorDetails, chatInfo.snippet.displayMessage, SteveEventSystemHandle);
                 SteveEventSystemHandle.OnSubscription.Invoke(hash, chatInfo.snippet.memberMilestoneChatDetails.memeberMonth);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=red>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
@@ -165,7 +166,7 @@ public class StreamingEventManager : MonoBehaviour
             YoutubeUnity.instance.OnMemberMilestoneChatEvent = async (chatInfo) =>
             {
                 await UniTask.SwitchToMainThread();
-                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.instance.nameSpliter}{chatInfo.authorDetails.displayName}");
+                int hash = Animator.StringToHash($"{chatInfo.authorDetails.channelId}{GameManager.nameSpliter}{chatInfo.authorDetails.displayName}");
                 await OnInit(chatInfo.authorDetails, chatInfo.snippet.displayMessage, SteveEventSystemHandle, chatInfo.snippet.memberMilestoneChatDetails.memeberMonth);
                 SteveEventSystemHandle.OnSubscription.Invoke(hash, chatInfo.snippet.memberMilestoneChatDetails.memeberMonth);
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=red>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
@@ -181,6 +182,7 @@ public class StreamingEventManager : MonoBehaviour
 
                 if (isInit)
                 {
+                    if (GameManager.instance.playerCount > GameManager.instance.MaxPlayerCount) return;
                     GameManager.instance.viewerInfos.Add(userNameComponent, new GameManager.ViewerInfo(userNameComponent, subMonth));
                     /*GameManager.instance.spawnOrderQueue.Enqueue(new GameManager.SpawnOrder(hash,
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/

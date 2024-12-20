@@ -26,15 +26,19 @@ public enum SteveState
 }
 public struct NameTagComponent : IComponentData //해당 컨포넌트를 가지고 있는 Entity는 전부 NameTag를 표시
 {
-    public FixedString64Bytes name;
+    public FixedString128Bytes name;
 }
 public struct PlayerComponent : IComponentData
 {
-    public FixedString64Bytes userName;
+    public FixedString128Bytes userName;
     public SteveState lastState;
     public SteveState currentState;
-    public float bedTime;
+
+    public float score;
     public bool isBed;
+}
+public struct BedTag : IComponentData
+{
 }
 public struct ExplosiveComponent : IComponentData
 {
