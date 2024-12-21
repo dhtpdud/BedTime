@@ -81,13 +81,14 @@ namespace OSY
     {
         public static Dictionary<int, string> hashMemory = new Dictionary<int, string>();
         public static readonly string stringSpace = " ";
-        public static async UniTask CachingTextureTask(string url)
+        public static readonly string stringSwitchLine = "\n";
+        public static async UniTask<Texture2D> CachingTextureTask(string url)
         {
             if (url == null || url == string.Empty || url == "\r\n")
-                return;
+                return null;
             int urlHash = Animator.StringToHash(url);
-            if (GameManager.instance.thumbnailsCacheDic.ContainsKey(urlHash))
-                return;
+            if (GameManager.instance.TexturesCacheDic.ContainsKey(urlHash))
+                return GameManager.instance.TexturesCacheDic[urlHash];
             string protocol = url.Substring(0, 4);
             if (!protocol.Equals("http") && !protocol.Equals("blob"))
                 url = $"file:///{url}";
@@ -101,15 +102,16 @@ namespace OSY
                     if (request.result == UnityWebRequest.Result.ConnectionError)
                     {
                         //Debug.Log(request.error);
-                        return;
+                        return null;
                     }
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    //Debug.LogWarning(e);
-                    return;
+                    Debug.LogWarning(e);
+                    return null;
                 }
-                GameManager.instance.thumbnailsCacheDic.TryAdd(urlHash, ((DownloadHandlerTexture)request.downloadHandler).texture);
+                GameManager.instance.TexturesCacheDic.TryAdd(urlHash, ((DownloadHandlerTexture)request.downloadHandler).texture);
+                return ((DownloadHandlerTexture)request.downloadHandler).texture;
             }
         }
         public static async UniTask WaitUntilRecord(Stopwatch stopwatch, NativeArray<float> lastRecordTIme, string taskName, Func<bool> waitCondition, CancellationToken token, bool isDebug = false)

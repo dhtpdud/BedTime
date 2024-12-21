@@ -1,6 +1,4 @@
 using Cysharp.Threading.Tasks;
-using System;
-using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -25,7 +23,7 @@ partial class OnTriggerBedSystem : SystemBase
         var ecb = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
 
         var bodyPartLookup = SystemAPI.GetComponentLookup<BodyPartComponent>(true);
-        var playerLookup = SystemAPI.GetComponentLookup<PlayerComponent>(false);
+        var playerLookup = SystemAPI.GetComponentLookup<PlayerComponent>(true);
 
         foreach (var (bed, bedTransformRef) in SystemAPI.Query<RefRO<BedTag>, RefRO<LocalTransform>>())
         {
@@ -35,7 +33,7 @@ partial class OnTriggerBedSystem : SystemBase
             physicsWorld.OverlapBox(bedTransform.Position, bedTransform.Rotation, new float3(0.4f, 0.8f, 1.1f), ref hits, CollisionFilter.Default);
 
             NativeParallelHashMap<FixedString128Bytes, float> playerScoreInfoes = new NativeParallelHashMap<FixedString128Bytes, float>(GameManager.instance.viewerInfos.Count, Allocator.TempJob);
-            new ProcessHitsJob { playerScoreInfoes = playerScoreInfoes, BodyPartLookup = bodyPartLookup, DeltaTime = SystemAPI.Time.DeltaTime, parallelWriter = ecb.AsParallelWriter(), Hits = hits, PlayerLookup = playerLookup }
+            new AddScoreJob { playerScoreInfoes = playerScoreInfoes, BodyPartLookup = bodyPartLookup, DeltaTime = SystemAPI.Time.DeltaTime, parallelWriter = ecb.AsParallelWriter(), Hits = hits, PlayerLookup = playerLookup }
             .Schedule(hits.Length, CheckedStateRef.Dependency).Complete();
 
 
@@ -43,10 +41,12 @@ partial class OnTriggerBedSystem : SystemBase
             {
                 if (playerScoreInfo.Key == "") continue;
                 var playerInfo = GameManager.instance.viewerInfos[playerScoreInfo.Key];
-                var playerScore = playerScoreInfo.Value.ToString("0.00");
+                var playerScore = playerScoreInfo.Value.ToString(GameManager.stringDecimal2);
                 playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{playerScoreInfo.Key.ToString()}\n[{playerInfo.subscribeMonth}Month]\nScore:{playerScore}" : $"{playerScoreInfo.Key.ToString()}\nScore:{playerScore}";
                 if (Timer > 1)
+                {
                     playerInfo.UpdateNameTag().Forget();
+                }
                 //playerInfo.UpdatePlayerBoardScore(playerScore);
                 playerInfo.score = playerScore;
                 GameManager.instance.UpdateLeaderBoard();
@@ -60,7 +60,7 @@ partial class OnTriggerBedSystem : SystemBase
     }
 
     [BurstCompile]
-    public struct ProcessHitsJob : IJobFor
+    public struct AddScoreJob : IJobFor
     {
         public NativeParallelHashMap<FixedString128Bytes, float> playerScoreInfoes;
         [ReadOnly] public NativeList<DistanceHit> Hits;

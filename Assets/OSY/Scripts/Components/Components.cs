@@ -31,11 +31,7 @@ public struct NameTagComponent : IComponentData //해당 컨포넌트를 가지고 있는 En
 public struct PlayerComponent : IComponentData
 {
     public FixedString128Bytes userName;
-    public SteveState lastState;
-    public SteveState currentState;
-
     public float score;
-    public bool isBed;
 }
 public struct BedTag : IComponentData
 {
@@ -80,7 +76,7 @@ public struct DonationConfig
     public float MinSize;
     public float MaxSize;
 }
-public struct SteveConfig
+public struct PlayerConfig
 {
     public float DefalutLifeTime;
     public float AddLifeTime;
@@ -101,6 +97,7 @@ public struct EntityStoreComponent : IComponentData
     public Entity creeper;
     public Entity particleExplosionWhite;
     public Entity particleExplosionBlack;
+    public Entity diamond;
 }
 public struct SpawnerComponent : IComponentData
 {
@@ -152,7 +149,7 @@ public struct GameManagerSingletonComponent : IComponentData
     public float stabilityPower;
 
     public float physicMaxVelocity;
-    public BlobAssetReference<SteveConfig> steveConfig;
+    public BlobAssetReference<PlayerConfig> steveConfig;
     public BlobAssetReference<DonationConfig> donationConfig;
 }
 public struct RandomDataComponent : IComponentData

@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DG.Tweening;
 using OSY;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,10 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
+    public int MaxDiaCount;
+    public int diaCount;
+    public int MaxChatCount;
+    public int chatCount;
     public int MaxPlayerCount;
     public int playerCount;
     public int MaxParticleCount;
@@ -24,9 +29,12 @@ public class GameManager : MonoBehaviour
     [HideInInspector]
     public Transform mainCamTrans;
     public int targetFPS = 60;
-    public const string nameSpliter = "!:";
-    public const string kingEmoji = "\U0001F451";
+
+    public const string stringNameSpliter = "!:";
+    public const string stringKingEmoji = "\U0001F451";
     public const string stringZero = "0";
+    public const string stringProfileImage = "ProfileImage";
+    public const string stringDecimal2 = "0.00";
 
     //캐싱용 변수
     public float deltaTime { get; private set; }
@@ -95,7 +103,7 @@ public class GameManager : MonoBehaviour
     public Transform playerSpawnTransform;
     public Transform screenSpawnTransform;
     [Serializable]
-    public class SteveConfig
+    public class PlayerConfig
     {
         public float defalutLifeTime;
         public float addLifeTime;
@@ -114,36 +122,36 @@ public class GameManager : MonoBehaviour
         public float IdlingTimeMin;
         public float IdlingTimeMax;
     }
-    public SteveConfig peepoConfig;
+    public PlayerConfig playerConfig;
     public DonationConfig donationConfig;
     public void SetDefalutLifeTime(string val)
     {
-        peepoConfig.defalutLifeTime = float.Parse(val);
+        playerConfig.defalutLifeTime = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetAddLifeTime(string val)
     {
-        peepoConfig.addLifeTime = float.Parse(val);
+        playerConfig.addLifeTime = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetMaxLifeTime(string val)
     {
-        peepoConfig.maxLifeTime = float.Parse(val);
+        playerConfig.maxLifeTime = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetDefaultSize(string val)
     {
-        peepoConfig.defaultSize = float.Parse(val);
+        playerConfig.defaultSize = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetMinSize(string val)
     {
-        peepoConfig.minSize = float.Parse(val);
+        playerConfig.minSize = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetMaxSize(string val)
     {
-        peepoConfig.maxSize = float.Parse(val);
+        playerConfig.maxSize = float.Parse(val);
         gameManagerSystem.UpdateSetting();
     }
     public void SetDonationObjectCountFactor(string val)
@@ -172,10 +180,13 @@ public class GameManager : MonoBehaviour
     }
     public float chatBubbleSize = 1;
 
-    public Dictionary<int, Texture2D> thumbnailsCacheDic = new Dictionary<int, Texture2D>();
+    public Dictionary<int, Texture2D> TexturesCacheDic = new Dictionary<int, Texture2D>();
 
     [Header("UI")]
     public Canvas rootCanvas;
+    public GameObject chatPrefab;
+    public Transform chatLineTrans;
+    public TMP_Text playerCountTMP;
     public Transform leaderBodardTrans;
     public GameObject playerBoardPrefab;
     public Transform nameTagUICanvasTransform;
@@ -236,6 +247,10 @@ public class GameManager : MonoBehaviour
         public int subscribeMonth;
         /*public GameObject chatBubbleObjects;
         public List<ChatInfo> chatInfos;*/
+
+        public Image profileImage;
+        public Texture2D profileTexture;
+
         public GameObject nameTagObject;
         public TMP_Text nameTagTMP;
         public Image nameTagBackground;
@@ -244,7 +259,6 @@ public class GameManager : MonoBehaviour
         public Transform playerBoardTrans;
         public TMP_Text playerBoardTMP;
 
-
         public bool isEnable;
 
         public CancellationTokenSource UpdateCTS;
@@ -252,34 +266,46 @@ public class GameManager : MonoBehaviour
         {
             this.name = displayName;
             this.subscribeMonth = subscribeMonth;
-            this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
-            //chatInfos = new List<ChatInfo>();
-            //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
-            nameTagTMP = nameTagObject.GetComponentInChildren<TMP_Text>(true);
-            nameTagBackground = nameTagObject.GetComponentInParent<Image>(true);
-            nameTagTMP.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
-            //Debug.Log(nicknameColor.ToHexString());
-
-            this.playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodardTrans);
-            playerBoardTrans = this.playerBoard.transform;
-            playerBoardTMP = playerBoard.GetComponentInChildren<TMP_Text>();
-
             this.score = stringZero;
-            UpdatePlayerBoardScore();
+
+            UpdatePlayerBoard();
             UpdateNameTag().Forget();
         }
-        public void UpdatePlayerBoardScore()
+        public void UpdatePlayerBoard()
         {
+            if (playerBoard == null)
+            {
+                Debug.Log("리더보드 객체 없음");
+                playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodardTrans);
+                playerBoardTrans = playerBoard.transform;
+                playerBoardTMP = playerBoard.GetComponentInChildren<TMP_Text>();
+                profileImage = playerBoardTrans.GetChild(0).GetChild(0).GetComponent<Image>();
+            }
+
+            if (profileTexture != null)
+            {
+                profileImage.sprite = Sprite.Create(profileTexture, new Rect(0, 0, profileTexture.width, profileTexture.height), new Vector2(0.5f, 0.5f));
+            }
             var rank = playerBoardTrans.GetSiblingIndex() + 1;
-            this.playerBoardTMP.text = $"{rank}. {(rank == 1 ? kingEmoji : string.Empty)}{name}\nScore:{this.score}";
+            this.playerBoardTMP.text = $"{rank}. {(rank == 1 ? stringKingEmoji : string.Empty)}{name}\nScore:{this.score}";
         }
         public async UniTask UpdateNameTag()
         {
             if (UpdateCTS != null && !UpdateCTS.IsCancellationRequested)
             {
                 UpdateCTS?.Cancel();
-                UpdateCTS?.Dispose();
+                //UpdateCTS?.Dispose();
                 await UniTask.Yield();
+            }
+            if (nameTagObject == null)
+            {
+                this.nameTagObject = Instantiate(instance.nameTag, instance.nameTagUICanvasTransform);
+                //chatInfos = new List<ChatInfo>();
+                //this.chatBubbleObjects = Instantiate(instance.chatBubbles, instance.chatBubbleUICanvasTransform);
+                nameTagTMP = nameTagObject.GetComponentInChildren<TMP_Text>(true);
+                nameTagBackground = nameTagObject.GetComponentInParent<Image>(true);
+                nameTagTMP.text = subscribeMonth > 0 ? $"{name}\n[{subscribeMonth}Month]" : name;
+                //Debug.Log(nicknameColor.ToHexString());
             }
             UpdateCTS = CancellationTokenSource.CreateLinkedTokenSource(nameTagTMP.destroyCancellationToken);
             UniTask.RunOnThreadPool(UpdateNameTagTask, true, UpdateCTS.Token).Forget();
@@ -296,19 +322,20 @@ public class GameManager : MonoBehaviour
             {
                 isEnable = false;
             }).Forget();
-            
+
         }
-        public void OnDestroy(FixedString128Bytes name)
+        /*public void OnDestroy(FixedString128Bytes name)
         {
             UniTask.RunOnThreadPool(async () =>
             {
+                //GameManager.instance.AddChat($"{name} left the game");
                 await UniTask.SwitchToMainThread();
                 //chatInfos.Clear();
                 Destroy(nameTagObject);
                 await Utils.YieldCaches.UniTaskYield;
                 GameManager.instance.viewerInfos.Remove(name);
             }, true, GameManager.instance.destroyCancellationToken).Forget();
-        }
+        }*/
     }
     //캐싱 변수
     public Dictionary<FixedString128Bytes, ViewerInfo> viewerInfos = new Dictionary<FixedString128Bytes, ViewerInfo>();
@@ -337,6 +364,33 @@ public class GameManager : MonoBehaviour
         Application.targetFrameRate = targetFPS;
         Profiler.maxUsedMemory = 2000000000;//2GB
         gameManagerSystem.UpdateSetting();
+        UpdateLeaderBoard();
+        /*UniTask.RunOnThreadPool(async () =>
+        {
+            float timer = 0;
+            while (!destroyCancellationToken.IsCancellationRequested)
+            {
+                try
+                {
+                    if (GameManager.instance.diaCount < 10) continue;
+                    timer += Time.deltaTime;
+                    if (timer > 0.01f)
+                    {
+                        timer = 0;
+                        lock (this)
+                        {
+                            GameManager.instance.diaCount -= 10;
+                            if (GameManager.instance.diaCount == 0)
+                                GameManager.instance.diaCount = 0;
+                        }
+                    }
+                }
+                finally
+                {
+                    await UniTask.Yield();
+                }
+            }
+        }, true, destroyCancellationToken).Forget();*/
     }
     public void Update()
     {
@@ -354,14 +408,39 @@ public class GameManager : MonoBehaviour
                 onMouseDragPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
         }
     }
+    public void UpdatePlayerCount()
+    {
+        GameManager.instance.playerCountTMP.text = $"{GameManager.instance.playerCount} Players";
+    }
     public void UpdateLeaderBoard()
     {
         int index = 0;
         foreach (var viewerInfo in viewerInfos.Values.OrderByDescending(viewerInfo => float.Parse(viewerInfo.score)))
         {
+            viewerInfo.UpdatePlayerBoard();
             viewerInfo.playerBoardTrans.SetSiblingIndex(index++);
-            viewerInfo.UpdatePlayerBoardScore();
         }
+    }
+    public void AddChat(FixedString128Bytes text)
+    {
+        UniTask.RunOnThreadPool(async () =>
+        {
+            await UniTask.SwitchToMainThread();
+            chatCount++;
+            if (chatCount > MaxChatCount)
+            {
+                GameObject.DestroyImmediate(GameManager.instance.chatLineTrans.GetChild(0));
+                chatCount = MaxChatCount;
+            }
+            var chatObject = Instantiate(GameManager.instance.chatPrefab, GameManager.instance.chatLineTrans);
+            chatObject.GetComponentInChildren<TMP_Text>().text = text.ToString().Replace(Utils.stringSwitchLine, Utils.stringSpace);
+            await UniTask.Delay(TimeSpan.FromSeconds(5));
+            chatObject.GetComponent<CanvasGroup>().DOFade(0, 3).OnComplete(() =>
+            {
+                chatCount--;
+                GameObject.DestroyImmediate(chatObject);
+            });
+        }).Forget();
     }
     public void OnDestroy()
     {

@@ -164,7 +164,6 @@ public partial class MouseInteractionSystem : SystemBase
         if (entityManager.HasComponent<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity))
         {
             PlayerComponent peepoComponent = entityManager.GetComponentData<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity);
-            peepoComponent.currentState = SteveState.Ragdoll;
             Utils.SetMaterial(gameManagerRW.dragingEntityInfo.rigidbody, gameManagerRW.dragingEntityInfo.material, gameManagerRW.dragingEntityInfo.colliderKey);
             entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, peepoComponent);
         }

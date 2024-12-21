@@ -1,12 +1,12 @@
 using Unity.Entities;
 using UnityEngine;
 
-public class SteveAuthoring : MonoBehaviour
+public class PlayerAuthoring : MonoBehaviour
 {
 }
-public class SteveBaker : Baker<SteveAuthoring>
+public class PlayerBaker : Baker<PlayerAuthoring>
 {
-    public override void Bake(SteveAuthoring authoring)
+    public override void Bake(PlayerAuthoring authoring)
     {
         Entity entity = GetEntity(authoring.gameObject, TransformUsageFlags.Dynamic);
 

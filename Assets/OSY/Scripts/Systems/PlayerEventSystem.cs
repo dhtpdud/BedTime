@@ -13,6 +13,7 @@ using Unity.Physics.Aspects;
 using Unity.Transforms;
 using UnityEngine;
 using WebSocketSharp;
+using Random = Unity.Mathematics.Random;
 
 [BurstCompile]
 public partial class PlayerEventSystem : SystemBase
@@ -83,13 +84,14 @@ public partial class PlayerEventSystem : SystemBase
     public Action<int> OnBan;
 
 
-    /*BlobAssetReference<SteveConfig> steveConfig;
-    BlobAssetReference<DonationConfig> donationConfig;*/
+    BlobAssetReference<PlayerConfig> playerConfig;
+    BlobAssetReference<DonationConfig> donationConfig;
     TimeData timeData;
 
     Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>> loopCommands = new Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>>();
 
     EntityStoreComponent store;
+    Random random;
 
     protected override void OnCreate()
     {
@@ -97,32 +99,39 @@ public partial class PlayerEventSystem : SystemBase
         CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
         adminNames.Add($"{PlatformNameCache.Chzzk}\n보노 보노");
         adminNames.Add($"{PlatformNameCache.YouTube}\nKamer");
+        random = new Random((uint)UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
     }
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-        /*steveConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
-        donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;*/
+        playerConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
+        donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;
         timeData = SystemAPI.Time;
         store = SystemAPI.GetSingleton<EntityStoreComponent>();
 
 
-        var initPlayerComponent = new PlayerComponent { currentState = SteveState.Ragdoll };
+        var initPlayerComponent = EntityManager.GetComponentData<PlayerComponent>(store.steve);
         var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
-        var initLife = new TimeLimitedLifeComponent { lifeTime = 86400 };
         initPlayerLocalTransform.Position = GameManager.instance.playerSpawnTransform.position;
+        var initLife = new TimeLimitedLifeComponent { lifeTime = playerConfig.Value.DefalutLifeTime };
         //new LocalTransform { Position = GameManager.instance.spawnTransform.position, Rotation = quaternion.Euler(0, 180, 0), Scale = 1 };
 
         OnSpawn = async (userNameString) =>
         {
             lock (GameManager.instance)
                 GameManager.instance.playerCount++;
+            GameManager.instance.UpdatePlayerCount();
+            GameManager.instance.AddChat($"{userNameString} joined the game");
 
             FixedString128Bytes userName = new FixedString128Bytes(userNameString);
             EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
 
             Entity spawnedPlayer = ecb.Instantiate(store.steve);
             initPlayerComponent.userName = userName;
+            if (GameManager.instance.viewerInfos.ContainsKey(userName))
+            {
+                initPlayerComponent.score = float.Parse(GameManager.instance.viewerInfos[userName].score);
+            }
             ecb.SetComponent(spawnedPlayer, initPlayerComponent);
             ecb.SetComponent(spawnedPlayer, initPlayerLocalTransform);
             ecb.AddComponent(spawnedPlayer, initLife);
@@ -141,20 +150,93 @@ public partial class PlayerEventSystem : SystemBase
         };
         OnChat = async (userNameString, text, addValueLife, payAmount) =>
         {
-            int cheezeCount = (int)(payAmount * 1/*donationConfig.Value.objectCountFactor*/);
+            int diamondCount = (int)(payAmount * donationConfig.Value.objectCountFactor);
             bool isUnkown = userNameString == null || userNameString == string.Empty;
             bool isAdmin = false;
             FixedString128Bytes userName = string.Empty;
+            bool isFoundPlayer = false;
+
+            if (diamondCount > 0)
+            {
+                UniTask.RunOnThreadPool(async() =>
+                {
+                    await UniTask.SwitchToMainThread();
+                    float3 diaSpawnPoint = GameManager.instance.screenSpawnTransform.position;
+                    var diaLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.diamond);
+                    var diaVelocity = EntityManager.GetComponentData<PhysicsVelocity>(store.diamond);
+                    EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+                    var lifeComponent = new TimeLimitedLifeComponent { lifeTime = 10 };
+
+                    int spawnedDiaCount = 0;
+                    for (int i = 0; i < diamondCount; i++)
+                    {
+                        if (GameManager.instance.diaCount > GameManager.instance.MaxDiaCount)
+                        {
+                            await UniTask.Yield();
+                            continue; 
+                        }
+                        lock (GameManager.instance)
+                        {
+                            GameManager.instance.diaCount++;
+                            spawnedDiaCount++;
+                        }
+                        Quaternion rotation;
+                        if (i % 2 == 0)
+                        {
+                            diaLocalTransform.Position = diaSpawnPoint + new float3(2, 0, 0);
+                            rotation = Quaternion.Euler(0, -45, 0);
+                        }
+                        else
+                        {
+                            diaLocalTransform.Position = diaSpawnPoint + new float3(-2, 0, 0);
+                            rotation = Quaternion.Euler(0, 45, 0);
+                        }
+
+                        random = new Random(random.NextUInt(uint.MinValue, uint.MaxValue));
+                        diaVelocity.Linear = ((Vector3)(diaLocalTransform.Position - float3.zero)).normalized + (rotation * new Vector3(random.NextFloat(-2, 2), random.NextFloat(0, 3), random.NextFloat(2, 4)));
+                        Entity spawnedDia = ecb.Instantiate(store.diamond);
+                        ecb.SetComponent(spawnedDia, diaLocalTransform);
+                        ecb.SetComponent(spawnedDia, diaVelocity);
+                        ecb.AddComponent(spawnedDia, lifeComponent);
+                        if (i % 10 == 0)
+                        {
+                            await UniTask.Yield();
+                            ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
+                        }
+                    }
+
+                    UniTask.RunOnThreadPool(async () =>
+                    {
+                        await UniTask.Delay(TimeSpan.FromSeconds(10));
+                        lock (GameManager.instance)
+                            GameManager.instance.diaCount -= spawnedDiaCount;
+                    }, true, GameManager.instance.destroyCancellationToken).Forget();
+
+                }, true, GameManager.instance.destroyCancellationToken).Forget();
+            }
+
             if (!isUnkown)
             {
                 userName = new FixedString128Bytes(userNameString);
                 isAdmin = adminNames.Contains(userName);
             }
+
             foreach (var (playerInfoRef, lifeRef) in SystemAPI.Query<RefRO<PlayerComponent>, RefRW<TimeLimitedLifeComponent>>())
             {
                 if (playerInfoRef.ValueRO.userName == userName)
-                    lifeRef.ValueRW.lifeTime = 86400;
+                {
+                    lifeRef.ValueRW.lifeTime = playerConfig.Value.DefalutLifeTime;
+                    isFoundPlayer = true;
+                }
             }
+            if (!isFoundPlayer)
+                OnSpawn(userNameString);
+            GameManager.instance.viewerInfos[userName].UpdateNameTag().Forget();
+            GameManager.instance.viewerInfos[userName].UpdatePlayerBoard();
+
+            await UniTask.Yield();
+            await UniTask.Yield();
+
             try
             {
                 Debug.Log(userName + ": " + text);
@@ -296,11 +378,18 @@ public partial class PlayerEventSystem : SystemBase
                                 {
                                     var player = playerRef.ValueRO;
                                     if (player.userName != userName) continue;
-                                    playerRef.ValueRW.score = 0;
+
+                                    playerRef.ValueRW.score -= 10;
+                                    if (playerRef.ValueRW.score < -100)
+                                    {
+                                        playerRef.ValueRW.score = -100;
+                                    }
+                                    var playerScore = playerRef.ValueRO.score;
                                     //GameManager.instance.viewerInfos[userName].UpdatePlayerBoardScore(GameManager.stringZero);
-                                    GameManager.instance.viewerInfos[userName].score = GameManager.stringZero;
+                                    GameManager.instance.viewerInfos[userName].score = playerScore.ToString(GameManager.stringDecimal2);
                                     var playerInfo = GameManager.instance.viewerInfos[userName];
-                                    playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{userName}\n[{playerInfo.subscribeMonth}Month]\nScore:0" : $"{userName}\nScore:0";
+                                    playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{userName}\n[{playerInfo.subscribeMonth}Month]\nScore:{GameManager.instance.viewerInfos[userName].score}" : $"{userName}\nScore:{GameManager.instance.viewerInfos[userName].score}";
+                                    GameManager.instance.UpdateLeaderBoard();
                                     foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
                                     {
                                         if (bodyPart.ValueRO.ownerEntity == playerEntity)
