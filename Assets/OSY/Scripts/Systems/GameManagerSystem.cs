@@ -1,20 +1,20 @@
 using OSY;
-using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
+[BurstCompile]
 [UpdateInGroup(typeof(Unity.Entities.InitializationSystemGroup))]
 public sealed partial class GameManagerInfoSystem : SystemBase
 {
     public bool isReady;
-    public Camera mainCam;
     public BlobAssetReference<SteveConfig> peepoConfigRef;
     public BlobAssetReference<DonationConfig> donationConfigRef;
+    [BurstCompile]
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-        mainCam = Camera.main;
         if (!SystemAPI.HasSingleton<GameManagerSingletonComponent>())
             EntityManager.CreateSingleton<GameManagerSingletonComponent>();
         //Debug.Log("최대 속도는?: " + GameManager.Instance.physicMaxVelocity + "/" + gameManagerRW.physicMaxVelocity);
@@ -31,16 +31,20 @@ public sealed partial class GameManagerInfoSystem : SystemBase
 
         gameManagerRW.steveConfig = peepoConfigRef;
         gameManagerRW.donationConfig = donationConfigRef;
+        gameManagerRW.playerSpawnPoint = GameManager.instance.playerSpawnTransform.position;
         isReady = true;
 
         blobBuilder.Dispose();
     }
+    [BurstCompile]
     protected override void OnUpdate()
     {
         ref var gameManagerRW = ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW;
-        gameManagerRW.ScreenPointToRayOfMainCam = mainCam.ScreenPointToRay(Input.mousePosition);
-        gameManagerRW.ScreenToWorldPointMainCam = mainCam.ScreenToWorldPoint(Input.mousePosition).ToFloat2();
+        gameManagerRW.ScreenPointToRayMainCam = GameManager.instance.mainCam.ScreenPointToRay(Input.mousePosition);
+        Vector3 depth = new Vector3(0, 0, ((Vector3)gameManagerRW.dragingEntityInfo.hitPoint - GameManager.instance.mainCamTrans.position).z);
+        gameManagerRW.ScreenToWorldPointMainCam = GameManager.instance.mainCam.ScreenToWorldPoint(Input.mousePosition + depth).ToFloat2();
     }
+    [BurstCompile]
     public void UpdateSetting()
     {
         ref var gameManagerRW = ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW;
@@ -72,6 +76,7 @@ public sealed partial class GameManagerInfoSystem : SystemBase
         donationConfigRW.MinSize = GameManager.instance.donationConfig.minSize;
         donationConfigRW.MaxSize = GameManager.instance.donationConfig.maxSize;
     }
+    [BurstCompile]
     protected override void OnDestroy()
     {
         base.OnDestroy();

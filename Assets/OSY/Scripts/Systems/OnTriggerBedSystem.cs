@@ -1,4 +1,6 @@
 using Cysharp.Threading.Tasks;
+using System;
+using System.Linq;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
@@ -30,24 +32,27 @@ partial class OnTriggerBedSystem : SystemBase
             NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.TempJob);
 
             var bedTransform = bedTransformRef.ValueRO;
-            physicsWorld.OverlapBox(bedTransform.Position, bedTransform.Rotation, new float3(0.6f, 0.8f, 1.3f), ref hits, CollisionFilter.Default);
+            physicsWorld.OverlapBox(bedTransform.Position, bedTransform.Rotation, new float3(0.4f, 0.8f, 1.1f), ref hits, CollisionFilter.Default);
+
             NativeParallelHashMap<FixedString128Bytes, float> playerScoreInfoes = new NativeParallelHashMap<FixedString128Bytes, float>(GameManager.instance.viewerInfos.Count, Allocator.TempJob);
-            new ProcessHitsJob { playerScoreInfoes = playerScoreInfoes.AsParallelWriter(), BodyPartLookup = bodyPartLookup, DeltaTime = SystemAPI.Time.DeltaTime, parallelWriter = ecb.AsParallelWriter(), Hits = hits, PlayerLookup = playerLookup }
-            .Schedule(hits.Length, 500, CheckedStateRef.Dependency).Complete();
+            new ProcessHitsJob { playerScoreInfoes = playerScoreInfoes, BodyPartLookup = bodyPartLookup, DeltaTime = SystemAPI.Time.DeltaTime, parallelWriter = ecb.AsParallelWriter(), Hits = hits, PlayerLookup = playerLookup }
+            .Schedule(hits.Length, CheckedStateRef.Dependency).Complete();
+
 
             foreach (var playerScoreInfo in playerScoreInfoes)
             {
-                if(playerScoreInfo.Key == "") continue;
+                if (playerScoreInfo.Key == "") continue;
                 var playerInfo = GameManager.instance.viewerInfos[playerScoreInfo.Key];
                 var playerScore = playerScoreInfo.Value.ToString("0.00");
                 playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{playerScoreInfo.Key.ToString()}\n[{playerInfo.subscribeMonth}Month]\nScore:{playerScore}" : $"{playerScoreInfo.Key.ToString()}\nScore:{playerScore}";
-                playerInfo.UpdatePlayerBoardScore(playerScore);
                 if (Timer > 1)
-                {
-                    Timer = 0;
                     playerInfo.UpdateNameTag().Forget();
-                }
+                //playerInfo.UpdatePlayerBoardScore(playerScore);
+                playerInfo.score = playerScore;
+                GameManager.instance.UpdateLeaderBoard();
             }
+            if (Timer > 1)
+                Timer = 0;
 
             playerScoreInfoes.Dispose();
             hits.Dispose();
@@ -55,9 +60,9 @@ partial class OnTriggerBedSystem : SystemBase
     }
 
     [BurstCompile]
-    public struct ProcessHitsJob : IJobParallelFor
+    public struct ProcessHitsJob : IJobFor
     {
-        public NativeParallelHashMap<FixedString128Bytes, float>.ParallelWriter playerScoreInfoes;
+        public NativeParallelHashMap<FixedString128Bytes, float> playerScoreInfoes;
         [ReadOnly] public NativeList<DistanceHit> Hits;
         [ReadOnly] public ComponentLookup<BodyPartComponent> BodyPartLookup;
         [ReadOnly] public ComponentLookup<PlayerComponent> PlayerLookup;
@@ -68,15 +73,18 @@ partial class OnTriggerBedSystem : SystemBase
         {
             var hit = Hits[index];
             Entity entityHit = hit.Entity;
-            if (BodyPartLookup.HasComponent(entityHit))
+            var tempBodyPartLookup = BodyPartLookup;
+            if (tempBodyPartLookup.HasComponent(entityHit))
             {
-                Entity hitPartOwnerEntity = BodyPartLookup[entityHit].ownerEntity;
+                Entity hitPartOwnerEntity = tempBodyPartLookup[entityHit].ownerEntity;
 
                 var tempPlayerComponent = PlayerLookup[hitPartOwnerEntity];
                 if (tempPlayerComponent.userName == "") return;
-                tempPlayerComponent.score += DeltaTime;
 
-                playerScoreInfoes.TryAdd(tempPlayerComponent.userName, tempPlayerComponent.score);
+                if (!playerScoreInfoes.TryAdd(tempPlayerComponent.userName, tempPlayerComponent.score))
+                    playerScoreInfoes[tempPlayerComponent.userName] += DeltaTime;
+
+                tempPlayerComponent.score = playerScoreInfoes[tempPlayerComponent.userName];
 
                 parallelWriter.SetComponent(index, hitPartOwnerEntity, tempPlayerComponent);
             }

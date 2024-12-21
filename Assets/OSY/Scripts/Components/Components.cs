@@ -2,7 +2,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Rendering;
+using UnityEngine;
 using Random = Unity.Mathematics.Random;
 using Ray = UnityEngine.Ray;
 
@@ -125,19 +125,22 @@ public struct GameManagerSingletonComponent : IComponentData
         readonly public Entity entity;
         readonly public RigidBody rigidbody;
         readonly public ColliderKey colliderKey;
-        readonly public Material material;
+        readonly public Unity.Physics.Material material;
+        readonly public float3 hitPoint;
 
-        public DragingEntityInfo(Entity entity, RigidBody rigidbody, ColliderKey colliderKey, Material material)
+        public DragingEntityInfo(Entity entity, RigidBody rigidbody, ColliderKey colliderKey, Unity.Physics.Material material, float3 hitPoint)
         {
             this.entity = entity;
             this.rigidbody = rigidbody;
             this.colliderKey = colliderKey;
             this.material = material;
+            this.hitPoint = hitPoint;
         }
     }
+    public float3 playerSpawnPoint;
     public DragingEntityInfo dragingEntityInfo;
 
-    public Ray ScreenPointToRayOfMainCam;
+    public Ray ScreenPointToRayMainCam;
     public float2 ScreenToWorldPointMainCam;
 
     public float gravity;

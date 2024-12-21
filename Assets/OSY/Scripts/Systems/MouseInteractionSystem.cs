@@ -1,5 +1,6 @@
+using Cysharp.Threading.Tasks;
 using OSY;
-using Rukhanka;
+using System.Security.Principal;
 using Unity.Burst;
 using Unity.Collections;
 using Unity.Core;
@@ -14,47 +15,39 @@ using RaycastHit = Unity.Physics.RaycastHit;
 
 [BurstCompile]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
+public partial class MouseInteractionSystem : SystemBase
 {
-    float timer;
+    private float dragingTimer;
     private CollisionFilter clickableFilter;
     private PhysicsWorldSingleton _physicsWorldSingleton;
     private EntityManager entityManager;
     TimeData time;
-    float2 entityPositionOnDown;
+    float3 entityPositionOnDown;
 
     public bool isDraging;
 
     public float2 mouseLastPosition;
     public float2 mouseVelocity;
-    public float2 onMouseDownPosition;
+    public float3 onMouseDownPosition;
     public float lastEntityRotation;
     [BurstCompile]
-    public void OnCreate(ref SystemState state)
+    protected override void OnCreate()
     {
         clickableFilter = new CollisionFilter { BelongsTo = 1u << 0, CollidesWith = ~(1u << 3), GroupIndex = 0 };
-        state.RequireForUpdate<GameManagerSingletonComponent>();
-        state.RequireForUpdate<EntityStoreComponent>();
-        entityManager = state.EntityManager;
-    }
-
-
-    [BurstCompile]
-    public void OnStartRunning(ref SystemState state)
-    {
-
+        CheckedStateRef.RequireForUpdate<GameManagerSingletonComponent>();
+        CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
+        entityManager = CheckedStateRef.EntityManager;
     }
 
     [BurstCompile]
-    public void OnUpdate(ref SystemState state)
+    protected override void OnUpdate()
     {
         time = SystemAPI.Time;
-        //timer += time.DeltaTime;
         _physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         if (Input.GetMouseButtonDown(0))
         {
             //RefRW는 매 프레임 마다. 사용할 때 호출해서 사용해야함.
-            OnMouseDown(ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW);
+            OnMouseDown(ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW, ref CheckedStateRef);
         }
         else if (Input.GetMouseButtonUp(0))
         {
@@ -63,23 +56,15 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
         if (Input.GetMouseButton(0))
         {
             OnMouse(ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW);
-            EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-            new SteveTestJob { time = SystemAPI.Time }.ScheduleParallel();
-        }
-
-        if(timer > 0.5f)
-        {
-            EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-            new SteveDanceTestJob().ScheduleParallel();
-            timer = 0;
+            EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
         }
     }
-    private void OnMouseDown(ref GameManagerSingletonComponent gameManagerRW)
+    private void OnMouseDown(ref GameManagerSingletonComponent gameManagerRW, ref SystemState state)
     {
-        onMouseDownPosition = gameManagerRW.ScreenToWorldPointMainCam;
+        onMouseDownPosition = new float3(gameManagerRW.ScreenToWorldPointMainCam.x, gameManagerRW.ScreenToWorldPointMainCam.y, 0);
 
-        float3 rayStart = gameManagerRW.ScreenPointToRayOfMainCam.origin;
-        float3 rayEnd = gameManagerRW.ScreenPointToRayOfMainCam.GetPoint(1000f);
+        float3 rayStart = gameManagerRW.ScreenPointToRayMainCam.origin;
+        float3 rayEnd = gameManagerRW.ScreenPointToRayMainCam.GetPoint(10000f);
         if (Raycast(rayStart, rayEnd, out RaycastHit raycastHit))
         {
             RigidBody hitRigidBody = _physicsWorldSingleton.PhysicsWorld.Bodies[raycastHit.RigidBodyIndex];
@@ -88,40 +73,76 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
             {
                 LocalTransform localTransform = entityManager.GetComponentData<LocalTransform>(hitEntity);
                 lastEntityRotation = localTransform.Rotation.value.z;
-                entityPositionOnDown = localTransform.Position.ToFloat2();
+                entityPositionOnDown = localTransform.Position;
                 isDraging = true;
 
                 Material material = Utils.GetMaterial(hitRigidBody, raycastHit.ColliderKey);
-                gameManagerRW.dragingEntityInfo = new GameManagerSingletonComponent.DragingEntityInfo(hitEntity, hitRigidBody, raycastHit.ColliderKey, material);
+                gameManagerRW.dragingEntityInfo = new GameManagerSingletonComponent.DragingEntityInfo(hitEntity, hitRigidBody, raycastHit.ColliderKey, material, raycastHit.Position);
+
+                if (Input.GetKey(KeyCode.LeftAlt))
+                    onMouseDownPosition = raycastHit.Position;
 
                 material.RestitutionCombinePolicy = Material.CombinePolicy.Minimum;
                 Utils.SetMaterial(gameManagerRW.dragingEntityInfo.rigidbody, material, raycastHit.ColliderKey);
             }
-            if (entityManager.HasComponent<PlayerComponent>(hitEntity))
+            if (entityManager.HasComponent<BodyPartComponent>(hitEntity))
             {
-                PlayerComponent peepoComponent = entityManager.GetComponentData<PlayerComponent>(hitEntity);
-                peepoComponent.currentState = SteveState.Dragging;
-                entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, peepoComponent);
+                BodyPartComponent bodyPartComponent = entityManager.GetComponentData<BodyPartComponent>(hitEntity);
+                if (Input.GetKey(KeyCode.LeftControl))
+                    foreach (var (bodyPart, rigidBodyAspect) in SystemAPI.Query<RefRO<BodyPartComponent>, RigidBodyAspect>())
+                    {
+                        if (bodyPart.ValueRO.ownerEntity == bodyPartComponent.ownerEntity)
+                        {
+                            rigidBodyAspect.Position = gameManagerRW.playerSpawnPoint;
+                            rigidBodyAspect.LinearVelocity *= 0;
+                        }
+                    };
+            }
+            if(entityManager.HasComponent<ExplosiveComponent>(hitEntity))
+            {
+                ExplosiveComponent explosiveComponent = entityManager.GetComponentData<ExplosiveComponent>(hitEntity);
+                explosiveComponent.isEnable = false;
+                entityManager.SetComponentData(hitEntity, explosiveComponent);
             }
         }
     }
     private void OnMouse(ref GameManagerSingletonComponent gameManagerRW)
     {
-        if (!isDraging) return;
+        if (!isDraging || Input.GetKey(KeyCode.LeftControl)) return;
+
+        dragingTimer += time.DeltaTime;
+        if (entityManager.HasComponent<BodyPartComponent>(gameManagerRW.dragingEntityInfo.entity) && dragingTimer > 1)
+        {
+            dragingTimer = 0;
+
+            BodyPartComponent bodyPartComponent = entityManager.GetComponentData<BodyPartComponent>(gameManagerRW.dragingEntityInfo.entity);
+            PlayerComponent playerComponent = entityManager.GetComponentData<PlayerComponent>(bodyPartComponent.ownerEntity);
+            GameManager.instance.viewerInfos[playerComponent.userName].UpdateNameTag().Forget();
+        }
+
         PhysicsVelocity velocity = entityManager.GetComponentData<PhysicsVelocity>(gameManagerRW.dragingEntityInfo.entity);
         LocalTransform localTransform = entityManager.GetComponentData<LocalTransform>(gameManagerRW.dragingEntityInfo.entity);
 
-        float2 entityPosition = localTransform.Position.ToFloat2();
-        float2 entityPositionFromGrabingPoint = entityPosition - entityPositionOnDown;
-        float2 mousePositionFromGrabingPoint = gameManagerRW.ScreenToWorldPointMainCam - onMouseDownPosition;
-        float2 entitiyToMouse = mousePositionFromGrabingPoint - entityPositionFromGrabingPoint;
+        float3 entityPosition = localTransform.Position;
+        float3 entityPositionFromGrabingPoint = entityPosition - entityPositionOnDown;
+        float3 mousePositionFromGrabingPoint;
+        if (Input.GetKey(KeyCode.LeftAlt))
+        {
+            float3 rayStart = gameManagerRW.ScreenPointToRayMainCam.origin;
+            float3 rayEnd = gameManagerRW.ScreenPointToRayMainCam.GetPoint(10000f);
+            Raycast(rayStart, rayEnd, out RaycastHit raycastHit);
+            mousePositionFromGrabingPoint = raycastHit.Position - onMouseDownPosition; 
+        }
+        else
+            mousePositionFromGrabingPoint = new float3(gameManagerRW.ScreenToWorldPointMainCam.x, gameManagerRW.ScreenToWorldPointMainCam.y,0) - onMouseDownPosition;
+        float3 entitiyToMouse = mousePositionFromGrabingPoint - entityPositionFromGrabingPoint;
         /*float2 mouseToEntity = entityPositionFromGrabingPoint - mousePositionFromGrabingPoint;
 
         float angularForce = lastEntityRotation - Vector2.Angle(Vector2.up, mouseToEntity);
         velocity.Angular += angularForce * time.DeltaTime;*/
 
         velocity.Linear = math.lerp(velocity.Linear, float3.zero, gameManagerRW.stabilityPower * time.DeltaTime);
-        velocity.Linear += (entitiyToMouse * gameManagerRW.dragPower * time.DeltaTime).ToFloat3();
+        velocity.Linear += entitiyToMouse * gameManagerRW.dragPower * time.DeltaTime;
 
         entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, velocity);
 
@@ -131,6 +152,15 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
     {
         if (!isDraging) return;
         isDraging = false;
+        dragingTimer = 0;
+
+        if (entityManager.HasComponent<ExplosiveComponent>(gameManagerRW.dragingEntityInfo.entity))
+        {
+            ExplosiveComponent explosiveComponent = entityManager.GetComponentData<ExplosiveComponent>(gameManagerRW.dragingEntityInfo.entity);
+            explosiveComponent.isEnable = true;
+            entityManager.SetComponentData(gameManagerRW.dragingEntityInfo.entity, explosiveComponent);
+        }
+
         if (entityManager.HasComponent<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity))
         {
             PlayerComponent peepoComponent = entityManager.GetComponentData<PlayerComponent>(gameManagerRW.dragingEntityInfo.entity);
@@ -152,37 +182,17 @@ public partial struct MouseInteractionSystem : ISystem, ISystemStartStop
     }
 
     [BurstCompile]
-    public void OnStopRunning(ref SystemState state)
+    partial struct PlayerResetJob : IJobEntity
     {
-    }
-
-    [BurstCompile]
-    partial struct SteveDanceTestJob : IJobEntity
-    {
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in BodyPartComponent bodyPart, RigidBodyAspect rigidBodyAspect)
+        [ReadOnly] public Entity targetEntity;
+        [ReadOnly] public float3 spawnPoint;
+        public void Execute(in BodyPartComponent bodyPartComponent, RigidBodyAspect rigidBodyAspect)
         {
-            switch(bodyPart.partType)
+            if (bodyPartComponent.ownerEntity == targetEntity)
             {
-                case SteveBodyPart.RightHand:
-                case SteveBodyPart.LeftHand:
-                case SteveBodyPart.Head:
-                    rigidBodyAspect.LinearVelocity += new float3(0, 3, 0);
-                    break;
-            }
-        }
-    }
-    [BurstCompile]
-    partial struct SteveTestJob : IJobEntity
-    {
-        [ReadOnly] public TimeData time;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in BodyPartComponent bodyPart, RigidBodyAspect rigidBodyAspect)
-        {
-            switch (bodyPart.partType)
-            {
-                case SteveBodyPart.RightHand:
-                case SteveBodyPart.LeftHand:
-                    rigidBodyAspect.LinearVelocity += new float3(0, 20*time.DeltaTime, 0);
-                    break;
+                rigidBodyAspect.Position = spawnPoint;
+                rigidBodyAspect.LinearVelocity *= 0;
+                rigidBodyAspect.AngularVelocityLocalSpace *= 0;
             }
         }
     }

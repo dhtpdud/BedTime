@@ -12,6 +12,7 @@ public class BodyPartAuthoring : MonoBehaviour
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
             AddComponent(entity, new BodyPartComponent { ownerEntity = GetEntity(authoring.owner, TransformUsageFlags.Dynamic), partType = authoring.partType });
+            AddComponent(entity, new DragableTag());
         }
     }
 }

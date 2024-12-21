@@ -11,7 +11,7 @@ public class StreamingEventManager : MonoBehaviour
     // Start is called before the first frame update
     public void Start()
     {
-        SteveEventSystem SteveEventSystemHandle = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<SteveEventSystem>();
+        PlayerEventSystem SteveEventSystemHandle = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<PlayerEventSystem>();
         UniTask.RunOnThreadPool(async () =>
         {
             await UniTask.SwitchToMainThread();
@@ -97,7 +97,7 @@ public class StreamingEventManager : MonoBehaviour
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatID, "<b><color=red>" + chatText + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
 
-            async UniTask OnInit(string userName, string chatText, SteveEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth, int payAmount)
+            async UniTask OnInit(string userName, string chatText, PlayerEventSystem SteveEventSystemHandle, ChzzkUnity.Profile profile, int subMonth, int payAmount)
             {
                 string userNameComponent = $"{PlatformNameCache.Chzzk}\n{profile.nickname}";
                 //Utils.hashMemory.TryAdd(hash, profile.nickname);
@@ -172,7 +172,7 @@ public class StreamingEventManager : MonoBehaviour
                 //GameManager.instance.viewerInfos[hash].chatInfos.Add(new GameManager.ChatInfo(chatInfo.id, "<b><color=red>" + chatInfo.snippet.displayMessage + "</color></b>", 10f, GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform));
             };
 
-            async UniTask OnInit(YoutubeUnity.LiveChatInfo.Chat.AuthorDetails authorDetails, string chatText, SteveEventSystem SteveEventSystemHandle, int subMonth = 0, int payAmount = 0)
+            async UniTask OnInit(YoutubeUnity.LiveChatInfo.Chat.AuthorDetails authorDetails, string chatText, PlayerEventSystem SteveEventSystemHandle, int subMonth = 0, int payAmount = 0)
             {
                 string userNameComponent = $"{PlatformNameCache.YouTube}\n{authorDetails.displayName}";
                 //string authVal = $"{authorDetails.channelId}{GameManager.instance.nameSpliter}{userNameComponent}";

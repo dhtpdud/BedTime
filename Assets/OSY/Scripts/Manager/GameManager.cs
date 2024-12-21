@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using OSY;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using TMPro;
 using Unity.Collections;
@@ -20,6 +21,8 @@ public class GameManager : MonoBehaviour
     public int particleCount;
     public GameManagerInfoSystem gameManagerSystem;
     public Camera mainCam;
+    [HideInInspector]
+    public Transform mainCamTrans;
     public int targetFPS = 60;
     public const string nameSpliter = "!:";
     public const string kingEmoji = "\U0001F451";
@@ -89,7 +92,7 @@ public class GameManager : MonoBehaviour
     }
 
 
-    public Transform palyerSpawnTransform;
+    public Transform playerSpawnTransform;
     public Transform screenSpawnTransform;
     [Serializable]
     public class SteveConfig
@@ -173,7 +176,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public Canvas rootCanvas;
-    public Transform leaderBodard;
+    public Transform leaderBodardTrans;
     public GameObject playerBoardPrefab;
     public Transform nameTagUICanvasTransform;
     public Transform chatBubbleUICanvasTransform;
@@ -228,6 +231,8 @@ public class GameManager : MonoBehaviour
     public class ViewerInfo
     {
         public string name;
+        public string score;
+
         public int subscribeMonth;
         /*public GameObject chatBubbleObjects;
         public List<ChatInfo> chatInfos;*/
@@ -238,6 +243,7 @@ public class GameManager : MonoBehaviour
         public GameObject playerBoard;
         public Transform playerBoardTrans;
         public TMP_Text playerBoardTMP;
+
 
         public bool isEnable;
 
@@ -254,16 +260,18 @@ public class GameManager : MonoBehaviour
             nameTagTMP.text = subscribeMonth > 0 ? $"{displayName}\n[{subscribeMonth}Month]" : displayName;
             //Debug.Log(nicknameColor.ToHexString());
 
-            this.playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodard);
+            this.playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodardTrans);
             playerBoardTrans = this.playerBoard.transform;
             playerBoardTMP = playerBoard.GetComponentInChildren<TMP_Text>();
-            UpdatePlayerBoardScore(stringZero);
+
+            this.score = stringZero;
+            UpdatePlayerBoardScore();
             UpdateNameTag().Forget();
         }
-        public void UpdatePlayerBoardScore(string score)
+        public void UpdatePlayerBoardScore()
         {
             var rank = playerBoardTrans.GetSiblingIndex() + 1;
-            this.playerBoardTMP.text = $"{rank}. {(rank == 1 ? kingEmoji : string.Empty)}{name}\nScore:{score}";
+            this.playerBoardTMP.text = $"{rank}. {(rank == 1 ? kingEmoji : string.Empty)}{name}\nScore:{this.score}";
         }
         public async UniTask UpdateNameTag()
         {
@@ -280,14 +288,15 @@ public class GameManager : MonoBehaviour
         {
             await UniTask.SwitchToMainThread();
             isEnable = true;
-
-
             nameTagBackground.color = new Color(0, 0, 0, 0.6f);
             nameTagTMP.color = subscribeMonth > 0 ? new Color(1, 0.5f, 0, 1) : Color.white;
             await UniTask.Delay(TimeSpan.FromSeconds(3), true, PlayerLoopTiming.Update, UpdateCTS.Token, true);
             nameTagTMP.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
-            nameTagBackground.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).Forget();
-            isEnable = false;
+            nameTagBackground.DoColorAsync(Color.clear, 3, Utils.YieldCaches.UniTaskYield, UpdateCTS.Token).OnCompleted(() =>
+            {
+                isEnable = false;
+            }).Forget();
+            
         }
         public void OnDestroy(FixedString128Bytes name)
         {
@@ -313,6 +322,7 @@ public class GameManager : MonoBehaviour
         instance = this;
         var tokenInit = destroyCancellationToken;
         mainCam ??= Camera.main;
+        mainCamTrans = mainCam.transform;
         originTargetFramerate = Application.targetFrameRate;
         origincaptureFramerate = Time.captureFramerate;
         originVSyncCount = QualitySettings.vSyncCount;
@@ -342,6 +352,15 @@ public class GameManager : MonoBehaviour
                 onMouseDownPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
             if (Input.GetMouseButton(0))
                 onMouseDragPosition = mainCam.ScreenToWorldPoint(Input.mousePosition);
+        }
+    }
+    public void UpdateLeaderBoard()
+    {
+        int index = 0;
+        foreach (var viewerInfo in viewerInfos.Values.OrderByDescending(viewerInfo => float.Parse(viewerInfo.score)))
+        {
+            viewerInfo.playerBoardTrans.SetSiblingIndex(index++);
+            viewerInfo.UpdatePlayerBoardScore();
         }
     }
     public void OnDestroy()
