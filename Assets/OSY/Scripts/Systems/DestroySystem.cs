@@ -73,7 +73,7 @@ public partial struct DestroySystem : ISystem
                     await UniTask.SwitchToMainThread();
                     GameManager.instance.UpdatePlayerCount();
                 }, true, GameManager.instance.destroyCancellationToken).Forget();
-                GameManager.instance.AddChat($"{playerComponent.userName} left the game");
+                GameManager.instance.AddChat($"<color=yellow><b>{playerComponent.userName}</b> left the game</color>");
                 //destroyNames.AddNoResize(playerComponent.userName);
                 parallelWriter.AddComponent(chunkIndex, entity, new DestroyMark());
             }

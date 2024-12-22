@@ -275,11 +275,10 @@ public class GameManager : MonoBehaviour
         {
             if (playerBoard == null)
             {
-                Debug.Log("리더보드 객체 없음");
                 playerBoard = Instantiate(instance.playerBoardPrefab, instance.leaderBodardTrans);
                 playerBoardTrans = playerBoard.transform;
                 playerBoardTMP = playerBoard.GetComponentInChildren<TMP_Text>();
-                profileImage = playerBoardTrans.GetChild(0).GetChild(0).GetComponent<Image>();
+                profileImage = playerBoardTrans.GetChild(1).GetChild(0).GetComponent<Image>();
             }
 
             if (profileTexture != null)
@@ -429,17 +428,24 @@ public class GameManager : MonoBehaviour
             chatCount++;
             if (chatCount > MaxChatCount)
             {
-                GameObject.DestroyImmediate(GameManager.instance.chatLineTrans.GetChild(0));
+                GameManager.instance.chatLineTrans.GetChild(0).GetComponent<CanvasGroup>().DOComplete();
+                GameObject.Destroy(GameManager.instance.chatLineTrans.GetChild(0).gameObject);
                 chatCount = MaxChatCount;
             }
             var chatObject = Instantiate(GameManager.instance.chatPrefab, GameManager.instance.chatLineTrans);
             chatObject.GetComponentInChildren<TMP_Text>().text = text.ToString().Replace(Utils.stringSwitchLine, Utils.stringSpace);
             await UniTask.Delay(TimeSpan.FromSeconds(5));
-            chatObject.GetComponent<CanvasGroup>().DOFade(0, 3).OnComplete(() =>
+            try
             {
-                chatCount--;
-                GameObject.DestroyImmediate(chatObject);
-            });
+                chatObject.GetComponent<CanvasGroup>().DOFade(0, 3).OnComplete(() =>
+                {
+                    chatCount--;
+                    GameObject.Destroy(chatObject);
+                });
+            }
+            catch (Exception)
+            {
+            }
         }).Forget();
     }
     public void OnDestroy()

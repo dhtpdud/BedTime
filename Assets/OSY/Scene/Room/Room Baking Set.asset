@@ -41,11 +41,11 @@ MonoBehaviour:
     m_Values:
     - position: {x: -1, y: -1, z: -1}
       index: 0
-      probeCount: 44160
+      probeCount: 44096
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 6
-      bricksCount: 690
+      bricksCount: 689
       indirectionEntryInfo:
       - positionInBricks: {x: -27, y: -27, z: -27}
         minSubdiv: 0
@@ -55,11 +55,11 @@ MonoBehaviour:
         hasOnlyBiggerBricks: 0
     - position: {x: -1, y: -1, z: 0}
       index: 9
-      probeCount: 98560
+      probeCount: 98624
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 13
-      bricksCount: 1540
+      bricksCount: 1541
       indirectionEntryInfo:
       - positionInBricks: {x: -27, y: -27, z: 0}
         minSubdiv: 0
@@ -97,11 +97,11 @@ MonoBehaviour:
         hasOnlyBiggerBricks: 0
     - position: {x: 0, y: -1, z: -1}
       index: 1
-      probeCount: 44160
+      probeCount: 44096
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 6
-      bricksCount: 690
+      bricksCount: 689
       indirectionEntryInfo:
       - positionInBricks: {x: 0, y: -27, z: -27}
         minSubdiv: 0
@@ -111,11 +111,11 @@ MonoBehaviour:
         hasOnlyBiggerBricks: 0
     - position: {x: 0, y: -1, z: 0}
       index: 10
-      probeCount: 98560
+      probeCount: 98624
       minSubdiv: 0
       indexChunkCount: 91
       shChunkCount: 13
-      bricksCount: 1540
+      bricksCount: 1541
       indirectionEntryInfo:
       - positionInBricks: {x: 0, y: -27, z: 0}
         minSubdiv: 0
@@ -182,7 +182,7 @@ MonoBehaviour:
     m_Keys:
     - Default
     m_Values:
-    - sceneHash: -402673672
+    - sceneHash: 1223090818
       cellDataAsset:
         m_AssetGUID: bf45b8d67a8af0c4aaa6666070bd7498
         m_StreamableAssetPath: APVStreamingAssets\08785e4d0bece064c8fbe013d0df5744\bf45b8d67a8af0c4aaa6666070bd7498.bytes
@@ -263,17 +263,17 @@ MonoBehaviour:
       m_Keys: 0000000009000000030000000c000000010000000a000000040000000d000000
       m_Values:
       - offset: 0
-        elementCount: 690
-      - offset: 11040
-        elementCount: 1540
+        elementCount: 689
+      - offset: 11024
+        elementCount: 1541
       - offset: 35680
         elementCount: 1537
       - offset: 60272
         elementCount: 2233
       - offset: 96000
-        elementCount: 690
-      - offset: 107040
-        elementCount: 1540
+        elementCount: 689
+      - offset: 107024
+        elementCount: 1541
       - offset: 131680
         elementCount: 1537
       - offset: 156272
@@ -358,7 +358,7 @@ MonoBehaviour:
     m_Keys:
     - 1a10caa3c70a9254f9115af0dc3f0a96
     m_Values:
-    - hasProbeVolume: 0
+    - hasProbeVolume: 1
       bakeScene: 1
       bounds:
         m_Center: {x: 0, y: 0, z: 0}

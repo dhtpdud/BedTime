@@ -73,8 +73,10 @@ public partial class PlayerEventSystem : SystemBase
 
     public const string stringALL = "all";
 
-
     public const string commandSplitter = "//";
+
+    public const string stringGravity = "gravity";
+    CancellationTokenSource gravityeCTS;
     #endregion
 
     public Action<string> OnSpawn;
@@ -121,7 +123,7 @@ public partial class PlayerEventSystem : SystemBase
             lock (GameManager.instance)
                 GameManager.instance.playerCount++;
             GameManager.instance.UpdatePlayerCount();
-            GameManager.instance.AddChat($"{userNameString} joined the game");
+            GameManager.instance.AddChat($"<color=yellow><b>{userNameString}</b> joined the game</color>");
 
             FixedString128Bytes userName = new FixedString128Bytes(userNameString);
             EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
@@ -215,24 +217,27 @@ public partial class PlayerEventSystem : SystemBase
                 }, true, GameManager.instance.destroyCancellationToken).Forget();
             }
 
+            int subMonth = 0;
+            int subMouthCut = 1;
             if (!isUnkown)
             {
                 userName = new FixedString128Bytes(userNameString);
                 isAdmin = adminNames.Contains(userName);
-            }
+                subMonth = GameManager.instance.viewerInfos[userName].subscribeMonth;
 
-            foreach (var (playerInfoRef, lifeRef) in SystemAPI.Query<RefRO<PlayerComponent>, RefRW<TimeLimitedLifeComponent>>())
-            {
-                if (playerInfoRef.ValueRO.userName == userName)
+                foreach (var (playerInfoRef, lifeRef) in SystemAPI.Query<RefRO<PlayerComponent>, RefRW<TimeLimitedLifeComponent>>())
                 {
-                    lifeRef.ValueRW.lifeTime = playerConfig.Value.DefalutLifeTime;
-                    isFoundPlayer = true;
+                    if (playerInfoRef.ValueRO.userName == userName)
+                    {
+                        lifeRef.ValueRW.lifeTime = playerConfig.Value.DefalutLifeTime;
+                        isFoundPlayer = true;
+                    }
                 }
+                if (!isFoundPlayer)
+                    OnSpawn(userNameString);
+                GameManager.instance.viewerInfos[userName].UpdateNameTag().Forget();
+                GameManager.instance.viewerInfos[userName].UpdatePlayerBoard();
             }
-            if (!isFoundPlayer)
-                OnSpawn(userNameString);
-            GameManager.instance.viewerInfos[userName].UpdateNameTag().Forget();
-            GameManager.instance.viewerInfos[userName].UpdatePlayerBoard();
 
             await UniTask.Yield();
             await UniTask.Yield();
@@ -257,7 +262,7 @@ public partial class PlayerEventSystem : SystemBase
 
                             case stringDT:
                             case stringDanceTime:
-                                if (!isAdmin && payAmount == 0) break;
+                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
                                 if (danceCTS != null && !danceCTS.IsCancellationRequested)
                                 {
                                     danceCTS?.Cancel();
@@ -267,8 +272,8 @@ public partial class PlayerEventSystem : SystemBase
                                 await UniTask.Yield();
                                 await UniTask.Yield();
 
-                                float limitSec = float.Parse(commands[1]);
-                                limitSec = (limitSec <= -1 || limitSec > 10) && !isAdmin ? 10 : limitSec;
+                                float dtLimitSec = float.Parse(commands[1]);
+                                dtLimitSec = (dtLimitSec <= -1 || dtLimitSec > 10) && !isAdmin ? 10 : dtLimitSec;
 
                                 danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
 
@@ -277,7 +282,7 @@ public partial class PlayerEventSystem : SystemBase
                                     await UniTask.SwitchToMainThread();
                                     try
                                     {
-                                        for (float timer = 0; limitSec == -1 || timer <= limitSec; timer += 0.5f)
+                                        for (float timer = 0; dtLimitSec == -1 || timer <= dtLimitSec; timer += 0.5f)
                                         {
                                             if (danceCTS.IsCancellationRequested) return;
                                             CheckedStateRef.Dependency = new StevePopupJob().ScheduleParallel(CheckedStateRef.Dependency);
@@ -403,7 +408,7 @@ public partial class PlayerEventSystem : SystemBase
                                 break;
                             case stringRA:
                             case stringResetAll:
-                                if (!isAdmin && payAmount == 0 || isResettingAll) break;
+                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut /*|| isResettingAll*/) break;
                                 isResettingAll = true;
                                 int batchCountRA = 0;
                                 float3 spawnPoint = GameManager.instance.playerSpawnTransform.position;
@@ -490,6 +495,7 @@ public partial class PlayerEventSystem : SystemBase
                                 break;
 
                             case stringCreeper:
+                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
                                 int spawnCount = 0;
                                 try
                                 {
@@ -499,7 +505,7 @@ public partial class PlayerEventSystem : SystemBase
                                 {
                                     spawnCount = 1;
                                 }
-                                if (!isAdmin && spawnCount > 2000)
+                                if (spawnCount > 2000)
                                     spawnCount = 2000;
                                 float3 creeperSpawnPoint = GameManager.instance.screenSpawnTransform.position;
                                 var creeperLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.creeper);
@@ -522,6 +528,32 @@ public partial class PlayerEventSystem : SystemBase
                                     }
                                 }
                                 break;
+                            case stringGravity:
+                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
+                                if (gravityeCTS != null && !gravityeCTS.IsCancellationRequested)
+                                {
+                                    gravityeCTS?.Cancel();
+                                }
+
+                                await UniTask.Yield();
+                                await UniTask.Yield();
+
+                                float gLimitSec = float.Parse(commands[1]);
+
+
+                                float3 gravity = new float3(float.Parse(commands[2]), float.Parse(commands[3]), float.Parse(commands[4]));
+                                gLimitSec = (gLimitSec <= -1 || gLimitSec > 60 * 3) && !isAdmin ? 60 * 3 : gLimitSec;
+
+                                gravityeCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+
+                                UniTask.RunOnThreadPool(async () =>
+                                {
+                                    SystemAPI.GetSingletonRW<PhysicsStep>().ValueRW.Gravity = gravity;
+                                    await UniTask.Delay(TimeSpan.FromSeconds(gLimitSec), false, PlayerLoopTiming.Update, gravityeCTS.Token, true);
+                                    gravityeCTS?.Cancel();
+                                    SystemAPI.GetSingletonRW<PhysicsStep>().ValueRW.Gravity = new float3(0, -9.81f, 0);
+                                }, true, gravityeCTS.Token).Forget();
+                                break;
                         }
                     }
                 }
@@ -529,7 +561,26 @@ public partial class PlayerEventSystem : SystemBase
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                Debug.LogWarning("잘못된 명령어");
+
+                if(!isUnkown)
+                    GameManager.instance.AddChat($"<color=red><b>{userName}</b> entered an invalid command</color>");
+                else
+                    GameManager.instance.AddChat("<color=red>Unkown entered an invalid command</color>");
+
+                if (!isUnkown && payAmount > 0)
+                    foreach (var (playerRef, playerEntity) in SystemAPI.Query<RefRW<PlayerComponent>>().WithEntityAccess())
+                    {
+                        var player = playerRef.ValueRO;
+                        if (player.userName != userName) continue;
+
+                        playerRef.ValueRW.score += payAmount;
+                        var playerScore = playerRef.ValueRO.score;
+                        //GameManager.instance.viewerInfos[userName].UpdatePlayerBoardScore(GameManager.stringZero);
+                        GameManager.instance.viewerInfos[userName].score = playerScore.ToString(GameManager.stringDecimal2);
+                        var playerInfo = GameManager.instance.viewerInfos[userName];
+                        playerInfo.nameTagTMP.text = playerInfo.subscribeMonth > 0 ? $"{userName}\n[{playerInfo.subscribeMonth}Month]\nScore:{GameManager.instance.viewerInfos[userName].score}" : $"{userName}\nScore:{GameManager.instance.viewerInfos[userName].score}";
+                        GameManager.instance.UpdateLeaderBoard();
+                    }
             }
 
             /*if (addValueLife != 0)
