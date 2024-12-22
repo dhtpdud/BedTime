@@ -186,6 +186,7 @@ public class GameManager : MonoBehaviour
     public Canvas rootCanvas;
     public GameObject chatPrefab;
     public Transform chatLineTrans;
+    public TMP_Text versionTMP;
     public TMP_Text playerCountTMP;
     public Transform leaderBodardTrans;
     public GameObject playerBoardPrefab;
@@ -352,6 +353,7 @@ public class GameManager : MonoBehaviour
         originTargetFramerate = Application.targetFrameRate;
         origincaptureFramerate = Time.captureFramerate;
         originVSyncCount = QualitySettings.vSyncCount;
+        versionTMP.text = $"V {Application.version}";
         ES3AutoSaveMgr.Current.Load();
     }
     public async void Start()

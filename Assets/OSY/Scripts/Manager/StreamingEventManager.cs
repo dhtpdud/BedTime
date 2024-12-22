@@ -4,8 +4,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using Unity.Entities;
 using UnityEngine;
-using UnityEngine.Rendering;
-using static YoutubeUnity.LiveChatInfo.Chat;
 
 public class StreamingEventManager : MonoBehaviour
 {
@@ -189,7 +187,7 @@ public class StreamingEventManager : MonoBehaviour
                         initForce: new float3(Utils.GetRandom(GameManager.instance.SpawnMinSpeed.x, GameManager.instance.SpawnMaxSpeed.x), Utils.GetRandom(GameManager.instance.SpawnMinSpeed.y, GameManager.instance.SpawnMaxSpeed.y), 0)));*/
                 }
                 //채팅때 마다 프로필 사진 업데이트
-                Debug.Log("URL: "+authorDetails.profileImageUrl);
+                Debug.Log("URL: " + authorDetails.profileImageUrl);
                 GameManager.instance.viewerInfos[userNameComponent].profileTexture = await Utils.CachingTextureTask(authorDetails.profileImageUrl);
 
                 addLifeTime = payAmount > 0 ? GameManager.instance.playerConfig.addLifeTime : 86400;

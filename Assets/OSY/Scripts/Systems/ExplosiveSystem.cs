@@ -1,144 +1,111 @@
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
-using OSY;
 using System;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Core;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics.Aspects;
 using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
+using Random = UnityEngine.Random;
 
 [BurstCompile]
-public partial class ExplosiveSystem : SystemBase
+public sealed partial class ExplosiveSystem : SystemBase
 {
-    float3 float3One;
-    EntityStoreComponent store;
-
     [BurstCompile]
     protected override void OnCreate()
     {
-        float3One = new float3(1, 1, 1);
-        CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
+        base.OnCreate();
+        RequireForUpdate<EntityStoreComponent>();
     }
-
-    [BurstCompile]
-    protected override void OnStartRunning()
-    {
-        store = SystemAPI.GetSingleton<EntityStoreComponent>();
-    }
-
-    [BurstCompile]
-    protected override void OnStopRunning()
-    {
-    }
-
     [BurstCompile]
     protected override void OnUpdate()
     {
+        float dt = SystemAPI.Time.DeltaTime;
+        var ecbMain = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>()
+            .CreateCommandBuffer(World.Unmanaged);
+        Dependency = new TimerJob { deltaTime = dt, one = one }.ScheduleParallel(Dependency);
+        Dependency.Complete();
 
-        new TimerJob { time = SystemAPI.Time, float3One = this.float3One }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+        var store = SystemAPI.GetSingleton<EntityStoreComponent>();
+        int explosionCount = AudioManager.instance.explosions.Count;
 
-        EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(CheckedStateRef.WorldUnmanaged);
-
-        int explosionsCount = AudioManager.instance.explosions.Count;
-        foreach (var (explosiveRef, localTransformRef, entity) in SystemAPI.Query<RefRW<ExplosiveComponent>, RefRO<LocalTransform>>().WithEntityAccess())
+        foreach (var (ex, trans, entity) in SystemAPI.Query<RefRW<ExplosiveComponent>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            ref var explosive = ref explosiveRef.ValueRW;
-            if (explosive.isEnable && explosive.time <= 0)
+            ref var data = ref ex.ValueRW;
+            if (data.isEnable && data.time <= 0)
             {
-                explosive.isEnable = false;
-
+                data.isEnable = false;
                 if (GameManager.instance.particleCount < GameManager.instance.MaxParticleCount)
                 {
-                    var particleEntity = ecb.Instantiate(store.particleExplosionWhite);
-                    var tempTransform = localTransformRef.ValueRO;
-                    tempTransform.Rotation = Quaternion.identity;
-                    ecb.SetComponent(particleEntity, tempTransform);
-                    lock (GameManager.instance)
-                        GameManager.instance.particleCount++;
+                    var pe = ecbMain.Instantiate(store.particleExplosionWhite);
+                    var t = trans.ValueRO; t.Rotation = quaternion.identity;
+                    ecbMain.SetComponent(pe, t);
+                    lock (GameManager.instance) GameManager.instance.particleCount++;
                     UniTask.RunOnThreadPool(async () =>
                     {
                         await UniTask.Delay(TimeSpan.FromSeconds(4));
-                        lock (GameManager.instance)
-                            GameManager.instance.particleCount--;
-                    }, true, GameManager.instance.destroyCancellationToken).Forget();
+                        lock (GameManager.instance) GameManager.instance.particleCount--;
+                    }).Forget();
                 }
-
                 GameManager.instance.mainCam.DOComplete();
-                GameManager.instance.mainCam.DOShakePosition(1f, 4f, 10, 10).SetEase(Ease.OutExpo);
-                AudioManager.instance.audioSource.PlayOneShot(AudioManager.instance.explosions[UnityEngine.Random.Range(0, explosionsCount - 1)]);
-                //GameManager.instance.mainCam.DOShakeRotation(2f, 10, 10, 90).SetEase(Ease.OutExpo);
+                GameManager.instance.mainCam.DOShakePosition(1f, 4f, 10, 10);
+                AudioManager.instance.audioSource
+                    .PlayOneShot(AudioManager.instance.explosions[Random.Range(0, explosionCount)]);
 
-                new ExplosionJob { explosiveComponent = explosive, explosionPoint = localTransformRef.ValueRO.Position, self = entity, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
+                var job = new ExplosionJob
+                {
+                    exData = data,
+                    center = trans.ValueRO.Position,
+                    self = entity,
+                    ecb = ecbMain.AsParallelWriter()
+                };
+                Dependency = job.ScheduleParallel(Dependency);
+                Dependency.Complete();
             }
         }
     }
+    float3 one = new float3(1, 1, 1);
 
     [BurstCompile]
     partial struct TimerJob : IJobEntity
     {
-        [ReadOnly] public TimeData time;
-        [ReadOnly] public float3 float3One;
-        public void Execute(ref ExplosiveComponent explosive, ref HDRPMaterialPropertyEmissiveColor emissiveColor)
+        [ReadOnly] public float deltaTime;
+        [ReadOnly] public float3 one;
+        public void Execute(ref ExplosiveComponent ex, ref HDRPMaterialPropertyEmissiveColor emissive)
         {
-            if (explosive.isEnable)
+            if (ex.isEnable)
             {
-                explosive.time -= time.DeltaTime;
-                if (explosive.time < 0)
-                {
-                    explosive.time = 0;
-                    emissiveColor.Value = float3.zero;
-                }
+                ex.time -= deltaTime;
+                if (ex.time < 0) { ex.time = 0; emissive.Value = float3.zero; }
                 else
                 {
-                    if (math.abs(math.sin((explosive.maxTime - explosive.time) * 5)) > 0.5f)
-                        emissiveColor.Value = float3One * 100;
-                    else
-                        emissiveColor.Value = float3.zero;
+                    float s = math.abs(math.sin((ex.maxTime - ex.time) * 5));
+                    emissive.Value = s > 0.5f ? one * 100f : float3.zero;
                 }
             }
         }
     }
+
     [BurstCompile]
     partial struct ExplosionJob : IJobEntity
     {
-        [ReadOnly] public ExplosiveComponent explosiveComponent;
-        [ReadOnly] public float3 explosionPoint;
+        [ReadOnly] public ExplosiveComponent exData;
+        [ReadOnly] public float3 center;
         [ReadOnly] public Entity self;
-
-        public EntityCommandBuffer.ParallelWriter parallelWriter;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, RigidBodyAspect rigidBody)
+        public EntityCommandBuffer.ParallelWriter ecb;
+        public void Execute([ChunkIndexInQuery] int chunk, in Entity e, RigidBodyAspect rb)
         {
-            if (self == entity)
+            if (e == self)
             {
-                parallelWriter.AddComponent(chunkIndex, entity, new DestroyMark());
+                ecb.AddComponent<DestroyMark>(chunk, e);
                 return;
             }
-            Vector3 force = rigidBody.Position - explosionPoint;
-            float distance = math.length(force);
-            if (distance <= explosiveComponent.range)
-            {
-                rigidBody.LinearVelocity += force.normalized.ToFloat3() * (math.max(explosiveComponent.power / distance, explosiveComponent.power) / rigidBody.Mass);
-            }
-        }
-    }
-
-    [BurstCompile]
-    partial struct ExplosionChainJob : IJobEntity
-    {
-        [ReadOnly] public ExplosiveComponent otherExplosiveComponent;
-        [ReadOnly] public float3 explosionPoint;
-        public void Execute(ref ExplosiveComponent explosive, in LocalTransform localTransform)
-        {
-            float3 forceDir = localTransform.Position - explosionPoint;
-            if (math.length(forceDir) <= otherExplosiveComponent.range)
-            {
-                explosive.isEnable = true;
-            }
+            float3 force = rb.Position - center;
+            float dist = math.length(force);
+            if (dist <= exData.range)
+                rb.LinearVelocity += math.normalize(force) * (math.max(exData.power / dist, exData.power) / rb.Mass);
         }
     }
 }

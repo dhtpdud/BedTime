@@ -1,24 +1,15 @@
-using Cysharp.Threading.Tasks;
-using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
-using Unity.Jobs;
 using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
-public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
+public partial struct UITransformUpdateSystem : ISystem
 {
-    public JobHandle eventDepedency;
-    float2 topRightScreenPoint;
-    [BurstCompile]
-    public void OnStartRunning(ref SystemState state)
-    {
-        topRightScreenPoint = new float2(Screen.width, Screen.height);
-    }
     //[BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        float2 topRightScreenPoint = new float2(Screen.width, Screen.height);
         /*if (GameManager.instance?.chatBubbleUICanvasTransform != null && GameManager.instance.chatBubbleUICanvasTransform.gameObject.activeInHierarchy)
             new UpdateChatBubbleHUDJob { topRightScreenPoint = this.topRightScreenPoint }.ScheduleParallel();*/
         //if (GameManager.instance?.nameTagUICanvasTransform != null && GameManager.instance.nameTagUICanvasTransform.gameObject.activeInHierarchy)
@@ -78,7 +69,7 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
             }, true, GameManager.instance.destroyCancellationToken).Forget();
         }
     }*/
-    public partial struct UpdateNameTagHUDJob : IJobEntity
+    /*public partial struct UpdateNameTagHUDJob : IJobEntity
     {
         [ReadOnly] public float2 topRightScreenPoint;
         public void Execute(in LocalTransform localTransform, in NameTagComponent nameTagComponent)
@@ -106,10 +97,5 @@ public partial struct UITransformUpdateSystem : ISystem, ISystemStartStop
                     }
             }, true, GameManager.instance.destroyCancellationToken).Forget();
         }
-    }
-
-    [BurstCompile]
-    public void OnStopRunning(ref SystemState state)
-    {
-    }
+    }*/
 }

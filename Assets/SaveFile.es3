@@ -4,11 +4,11 @@
 		"value" : [
 			{
 				"_ES3Ref" : "5200637729981834868",
-				"transformID" : "932506590107704002",
+				"transformID" : "3055010454412256648",
 				"components" : [
 					{
 						"__type" : "GameManager,Assembly-CSharp",
-						"_ES3Ref" : "7847602825658475443",
+						"_ES3Ref" : "7904116051333191785",
 						"goID" : "5200637729981834868",
 						"viewerInfos" : {{
 								"utf8LengthInBytes" : 19,
@@ -156,535 +156,25 @@
 								}
 							}:{
 								"name" : "Chzzk\n보노 보노",
-								"score" : "316.43",
-								"subscribeMonth" : 0,
-								"profileImage" : {
-									"_ES3Ref" : "5615479828856962150"
-								},
-								"profileTexture" : null,
-								"nameTagObject" : null,
-								"nameTagTMP" : null,
-								"nameTagBackground" : null,
-								"playerBoard" : {
-									"_ES3Ref" : "7698146051057483485"
-								},
-								"playerBoardTrans" : {
-									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "523141384131951172"
-								},
-								"playerBoardTMP" : {
-									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "8301488526410401411"
-								},
-								"isEnable" : true,
-								"UpdateCTS" : {
-									"__type" : "System.Threading.CancellationTokenSource+Linked1CancellationTokenSource,mscorlib"
-								}
-							},{
-								"utf8LengthInBytes" : 13,
-								"bytes" : {
-									"offset0000" : {
-										"byte0000" : 89,
-										"byte0001" : 111,
-										"byte0002" : 117,
-										"byte0003" : 84,
-										"byte0004" : 117,
-										"byte0005" : 98,
-										"byte0006" : 101,
-										"byte0007" : 10,
-										"byte0008" : 75,
-										"byte0009" : 97,
-										"byte0010" : 109,
-										"byte0011" : 101,
-										"byte0012" : 114,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0016" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0032" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0048" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0064" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0080" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0096" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"byte0112" : 0,
-									"byte0113" : 0,
-									"byte0114" : 0,
-									"byte0115" : 0,
-									"byte0116" : 0,
-									"byte0117" : 0,
-									"byte0118" : 0,
-									"byte0119" : 0,
-									"byte0120" : 0,
-									"byte0121" : 0,
-									"byte0122" : 0,
-									"byte0123" : 0,
-									"byte0124" : 0,
-									"byte0125" : 0
-								}
-							}:{
-								"name" : "YouTube\nKamer",
-								"score" : "401.19",
-								"subscribeMonth" : 0,
-								"profileImage" : {
-									"_ES3Ref" : "2187067706738981116"
-								},
-								"profileTexture" : null,
-								"nameTagObject" : null,
-								"nameTagTMP" : null,
-								"nameTagBackground" : null,
-								"playerBoard" : {
-									"_ES3Ref" : "404087357916920331"
-								},
-								"playerBoardTrans" : {
-									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "446999242441676189"
-								},
-								"playerBoardTMP" : {
-									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "6086627561720671039"
-								},
-								"isEnable" : true,
-								"UpdateCTS" : {
-									"__type" : "System.Threading.CancellationTokenSource+Linked1CancellationTokenSource,mscorlib"
-								}
-							},{
-								"utf8LengthInBytes" : 17,
-								"bytes" : {
-									"offset0000" : {
-										"byte0000" : 89,
-										"byte0001" : 111,
-										"byte0002" : 117,
-										"byte0003" : 84,
-										"byte0004" : 117,
-										"byte0005" : 98,
-										"byte0006" : 101,
-										"byte0007" : 10,
-										"byte0008" : 236,
-										"byte0009" : 157,
-										"byte0010" : 180,
-										"byte0011" : 236,
-										"byte0012" : 139,
-										"byte0013" : 156,
-										"byte0014" : 237,
-										"byte0015" : 148
-									},
-									"offset0016" : {
-										"byte0000" : 132,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0032" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0048" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0064" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0080" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0096" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"byte0112" : 0,
-									"byte0113" : 0,
-									"byte0114" : 0,
-									"byte0115" : 0,
-									"byte0116" : 0,
-									"byte0117" : 0,
-									"byte0118" : 0,
-									"byte0119" : 0,
-									"byte0120" : 0,
-									"byte0121" : 0,
-									"byte0122" : 0,
-									"byte0123" : 0,
-									"byte0124" : 0,
-									"byte0125" : 0
-								}
-							}:{
-								"name" : "YouTube\n이시프",
-								"score" : "2271.01",
-								"subscribeMonth" : 0,
-								"profileImage" : {
-									"_ES3Ref" : "5397762305041616819"
-								},
-								"profileTexture" : null,
-								"nameTagObject" : null,
-								"nameTagTMP" : null,
-								"nameTagBackground" : null,
-								"playerBoard" : {
-									"_ES3Ref" : "2253874918155969770"
-								},
-								"playerBoardTrans" : {
-									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "856960916032303841"
-								},
-								"playerBoardTMP" : {
-									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "1541785163214557460"
-								},
-								"isEnable" : false,
-								"UpdateCTS" : {
-									"__type" : "System.Threading.CancellationTokenSource+Linked1CancellationTokenSource,mscorlib"
-								}
-							},{
-								"utf8LengthInBytes" : 15,
-								"bytes" : {
-									"offset0000" : {
-										"byte0000" : 67,
-										"byte0001" : 104,
-										"byte0002" : 122,
-										"byte0003" : 122,
-										"byte0004" : 107,
-										"byte0005" : 10,
-										"byte0006" : 235,
-										"byte0007" : 167,
-										"byte0008" : 140,
-										"byte0009" : 234,
-										"byte0010" : 179,
-										"byte0011" : 181,
-										"byte0012" : 236,
-										"byte0013" : 158,
-										"byte0014" : 144,
-										"byte0015" : 0
-									},
-									"offset0016" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0032" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0048" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0064" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0080" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"offset0096" : {
-										"byte0000" : 0,
-										"byte0001" : 0,
-										"byte0002" : 0,
-										"byte0003" : 0,
-										"byte0004" : 0,
-										"byte0005" : 0,
-										"byte0006" : 0,
-										"byte0007" : 0,
-										"byte0008" : 0,
-										"byte0009" : 0,
-										"byte0010" : 0,
-										"byte0011" : 0,
-										"byte0012" : 0,
-										"byte0013" : 0,
-										"byte0014" : 0,
-										"byte0015" : 0
-									},
-									"byte0112" : 0,
-									"byte0113" : 0,
-									"byte0114" : 0,
-									"byte0115" : 0,
-									"byte0116" : 0,
-									"byte0117" : 0,
-									"byte0118" : 0,
-									"byte0119" : 0,
-									"byte0120" : 0,
-									"byte0121" : 0,
-									"byte0122" : 0,
-									"byte0123" : 0,
-									"byte0124" : 0,
-									"byte0125" : 0
-								}
-							}:{
-								"name" : "Chzzk\n만공자",
 								"score" : "0",
 								"subscribeMonth" : 0,
 								"profileImage" : {
-									"_ES3Ref" : "1743501513056046412"
+									"_ES3Ref" : "1918480469842244611"
 								},
 								"profileTexture" : null,
 								"nameTagObject" : null,
 								"nameTagTMP" : null,
 								"nameTagBackground" : null,
 								"playerBoard" : {
-									"_ES3Ref" : "2328674268662943726"
+									"_ES3Ref" : "1955178694175300235"
 								},
 								"playerBoardTrans" : {
 									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "4257363397806500316"
+									"_ES3Ref" : "1731929655718065625"
 								},
 								"playerBoardTMP" : {
 									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "8008532273031672908"
+									"_ES3Ref" : "2639029106580101074"
 								},
 								"isEnable" : false,
 								"UpdateCTS" : {
@@ -836,25 +326,34 @@
 								}
 							}:{
 								"name" : "Chzzk\nTEST",
-								"score" : "136.20",
+								"score" : "0",
 								"subscribeMonth" : 0,
 								"profileImage" : {
-									"_ES3Ref" : "5135010326590525751"
+									"_ES3Ref" : "6641057755646067234"
 								},
-								"profileTexture" : null,
-								"nameTagObject" : null,
-								"nameTagTMP" : null,
-								"nameTagBackground" : null,
+								"profileTexture" : {
+									"_ES3Ref" : "4385998186401881226"
+								},
+								"nameTagObject" : {
+									"_ES3Ref" : "1175131895824586092"
+								},
+								"nameTagTMP" : {
+									"__type" : "TMPro.TextMeshPro,Unity.TextMeshPro",
+									"_ES3Ref" : "3177043720737558717"
+								},
+								"nameTagBackground" : {
+									"_ES3Ref" : "1244216212715575163"
+								},
 								"playerBoard" : {
-									"_ES3Ref" : "717402512417121919"
+									"_ES3Ref" : "6918589987709997555"
 								},
 								"playerBoardTrans" : {
 									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "9106217407456657471"
+									"_ES3Ref" : "747402452473308090"
 								},
 								"playerBoardTMP" : {
 									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "967527194424462306"
+									"_ES3Ref" : "6139651792213363630"
 								},
 								"isEnable" : false,
 								"UpdateCTS" : {
@@ -1009,7 +508,7 @@
 							"b" : 1,
 							"a" : 0.7529412
 						},
-						"m_Text" : "AIzaSyDBSgRJW9F2t66JGL3DQUVfPPH1eWtmY64",
+						"m_Text" : "",
 						"m_CaretBlinkRate" : 0.85,
 						"m_CaretWidth" : 1,
 						"m_ReadOnly" : false,
@@ -1090,7 +589,7 @@
 							"b" : 1,
 							"a" : 0.7529412
 						},
-						"m_Text" : "https:\/\/youtube.com\/live\/EADvi_gBM6o?feature=share",
+						"m_Text" : "",
 						"m_CaretBlinkRate" : 0.85,
 						"m_CaretWidth" : 1,
 						"m_ReadOnly" : false,

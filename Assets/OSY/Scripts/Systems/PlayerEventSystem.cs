@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Threading;
 using Unity.Burst;
 using Unity.Collections;
-using Unity.Core;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -43,7 +42,6 @@ public partial class PlayerEventSystem : SystemBase
 
     public const string stringDT = "dt";
     public const string stringDanceTime = "dancetime";
-    CancellationTokenSource danceCTS;
 
     public const string stringCreeper = "creeper";
 
@@ -76,7 +74,6 @@ public partial class PlayerEventSystem : SystemBase
     public const string commandSplitter = "//";
 
     public const string stringGravity = "gravity";
-    CancellationTokenSource gravityeCTS;
     #endregion
 
     public Action<string> OnSpawn;
@@ -85,41 +82,33 @@ public partial class PlayerEventSystem : SystemBase
     public Action<int, int> OnSubscription;
     public Action<int> OnBan;
 
-
-    BlobAssetReference<PlayerConfig> playerConfig;
-    BlobAssetReference<DonationConfig> donationConfig;
-    TimeData timeData;
-
     Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>> loopCommands = new Dictionary<FixedString128Bytes, Dictionary<FixedString128Bytes, CancellationTokenSource>>();
 
-    EntityStoreComponent store;
-    Random random;
 
     protected override void OnCreate()
     {
         base.OnCreate();
         CheckedStateRef.RequireForUpdate<EntityStoreComponent>();
+        CheckedStateRef.RequireForUpdate<GameManagerSingletonComponent>();
         adminNames.Add($"{PlatformNameCache.Chzzk}\n보노 보노");
         adminNames.Add($"{PlatformNameCache.YouTube}\nKamer");
-        random = new Random((uint)UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
     }
     protected override void OnStartRunning()
     {
         base.OnStartRunning();
-        playerConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
-        donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;
-        timeData = SystemAPI.Time;
-        store = SystemAPI.GetSingleton<EntityStoreComponent>();
 
 
-        var initPlayerComponent = EntityManager.GetComponentData<PlayerComponent>(store.steve);
-        var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
-        initPlayerLocalTransform.Position = GameManager.instance.playerSpawnTransform.position;
-        var initLife = new TimeLimitedLifeComponent { lifeTime = playerConfig.Value.DefalutLifeTime };
+
         //new LocalTransform { Position = GameManager.instance.spawnTransform.position, Rotation = quaternion.Euler(0, 180, 0), Scale = 1 };
 
         OnSpawn = async (userNameString) =>
         {
+            var store = SystemAPI.GetSingleton<EntityStoreComponent>();
+            BlobAssetReference<PlayerConfig> playerConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
+            var initPlayerComponent = EntityManager.GetComponentData<PlayerComponent>(store.steve);
+            var initPlayerLocalTransform = EntityManager.GetComponentData<LocalTransform>(store.steve);
+            initPlayerLocalTransform.Position = GameManager.instance.playerSpawnTransform.position;
+            var initLife = new TimeLimitedLifeComponent { lifeTime = playerConfig.Value.DefalutLifeTime };
             lock (GameManager.instance)
                 GameManager.instance.playerCount++;
             GameManager.instance.UpdatePlayerCount();
@@ -152,6 +141,13 @@ public partial class PlayerEventSystem : SystemBase
         };
         OnChat = async (userNameString, text, addValueLife, payAmount) =>
         {
+            var loopCommands = this.loopCommands;
+            var random = new Random((uint)UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
+            CancellationTokenSource danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+            CancellationTokenSource gravityeCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
+            BlobAssetReference<PlayerConfig> playerConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().steveConfig;
+            BlobAssetReference<DonationConfig> donationConfig = SystemAPI.GetSingleton<GameManagerSingletonComponent>().donationConfig;
+            var store = SystemAPI.GetSingleton<EntityStoreComponent>();
             int diamondCount = (int)(payAmount * donationConfig.Value.objectCountFactor);
             bool isUnkown = userNameString == null || userNameString == string.Empty;
             bool isAdmin = false;
@@ -160,7 +156,7 @@ public partial class PlayerEventSystem : SystemBase
 
             if (diamondCount > 0)
             {
-                UniTask.RunOnThreadPool(async() =>
+                UniTask.RunOnThreadPool(async () =>
                 {
                     await UniTask.SwitchToMainThread();
                     float3 diaSpawnPoint = GameManager.instance.screenSpawnTransform.position;
@@ -175,7 +171,7 @@ public partial class PlayerEventSystem : SystemBase
                         if (GameManager.instance.diaCount > GameManager.instance.MaxDiaCount)
                         {
                             await UniTask.Yield();
-                            continue; 
+                            continue;
                         }
                         lock (GameManager.instance)
                         {
@@ -562,7 +558,7 @@ public partial class PlayerEventSystem : SystemBase
             {
                 Debug.LogException(ex);
 
-                if(!isUnkown)
+                if (!isUnkown)
                     GameManager.instance.AddChat($"<color=red><b>{userName}</b> entered an invalid command</color>");
                 else
                     GameManager.instance.AddChat("<color=red>Unkown entered an invalid command</color>");
