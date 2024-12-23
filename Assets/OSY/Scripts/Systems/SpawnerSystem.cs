@@ -1,58 +1,85 @@
 using Unity.Burst;
 using Unity.Collections;
+using Unity.Core;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
 [BurstCompile]
-public sealed partial class SpawnerSystem : SystemBase
+public partial struct SpawnerSystem : ISystem
 {
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        new TimerJob { time = SystemAPI.Time }.ScheduleParallel(state.Dependency).Complete();
+
+        EntityCommandBuffer ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+
+        foreach (var spawner in SystemAPI.Query<RefRW<SpawnerComponent>>())
+        {
+            if (spawner.ValueRO.currentSec >= spawner.ValueRO.spawnIntervalSec)
+            {
+                spawner.ValueRW.currentSec = 0;
+                new SpawnJob { parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(state.Dependency).Complete();
+            }
+        }
+    }
+
     [BurstCompile]
     partial struct TimerJob : IJobEntity
     {
-        [ReadOnly] public float deltaTime;
-        public void Execute(ref SpawnerComponent spawner)
+        [ReadOnly] public TimeData time;
+        public void Execute(ref SpawnerComponent spawnerComponent)
         {
-            if (spawner.currentSec < spawner.spawnIntervalSec)
-                spawner.currentSec += deltaTime;
+            if (spawnerComponent.currentSec < spawnerComponent.spawnIntervalSec)
+                spawnerComponent.currentSec += time.DeltaTime;
         }
     }
     [BurstCompile]
     partial struct SpawnJob : IJobEntity
     {
-        public EntityCommandBuffer.ParallelWriter ecb;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, ref SpawnerComponent spawner, ref RandomDataComponent rnd, in LocalTransform spawnerTransform)
+        public EntityCommandBuffer.ParallelWriter parallelWriter;
+        public void Execute([ChunkIndexInQuery] int chunkIndex, ref SpawnerComponent spawnerComponent, ref RandomDataComponent randomDataComponent, in LocalTransform spawnerTransformComponent)
         {
-            if (spawner.spawnedCount >= spawner.maxCount) return;
-            bool doSpawn = (spawner.spawnIntervalSec == 0) || (spawner.currentSec >= spawner.spawnIntervalSec);
-            if (!doSpawn) return;
-            spawner.currentSec = 0;
-            int remain = spawner.maxCount - spawner.spawnedCount;
-            if (remain <= 0) return;
-            int batch = (spawner.spawnIntervalSec == 0) ? math.min(remain, spawner.batchCount) : 1;
-            for (int i = 0; i < batch; i++)
+            if (spawnerComponent.spawnedCount >= spawnerComponent.maxCount) return;
+            Entity spawnedEntity;
+            LocalTransform initTransform;
+            if (spawnerComponent.spawnIntervalSec == 0)
             {
-                rnd.Random = new Unity.Mathematics.Random((uint)rnd.Random.NextInt(int.MinValue, int.MaxValue));
-                var e = ecb.Instantiate(chunkIndex, spawner.targetEntity);
-                var lt = new LocalTransform
+                int remainCount = spawnerComponent.maxCount - spawnerComponent.spawnedCount;
+                if (remainCount <= 0) return;
+                int batchCount = remainCount > spawnerComponent.batchCount ? spawnerComponent.batchCount : remainCount;
+                for (int i = 0; i < batchCount; i++)
                 {
-                    Position = spawnerTransform.Position,
-                    Rotation = spawnerTransform.Rotation,
-                    Scale = spawner.isRandomSize ? rnd.Random.NextFloat(spawner.minSize, spawner.maxSize) : 1f
-                };
-                ecb.SetComponent(chunkIndex, e, lt);
-                spawner.spawnedCount++;
+                    randomDataComponent.Random = new Random((uint)randomDataComponent.Random.NextInt(int.MinValue, int.MaxValue));
+                    spawnedEntity = parallelWriter.Instantiate(chunkIndex, spawnerComponent.targetEntity);
+                    initTransform = new LocalTransform { Position = spawnerTransformComponent.Position, Rotation = spawnerTransformComponent.Rotation, Scale = spawnerComponent.isRandomSize ? randomDataComponent.Random.NextFloat(spawnerComponent.minSize, spawnerComponent.maxSize) : 1 };
+                    parallelWriter.SetComponent(chunkIndex, spawnedEntity, initTransform);
+                    ++spawnerComponent.spawnedCount;
+                    //parallelWriter.SetName(chunkIndex, spawnedEntity, $"Steve{}");
+                }
+                return;
             }
-        }
-    }
-    protected override void OnUpdate()
-    {
-        float dt = SystemAPI.Time.DeltaTime;
-        var ecb = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>()
-            .CreateCommandBuffer(World.Unmanaged).AsParallelWriter();
+            randomDataComponent.Random = new Random((uint)randomDataComponent.Random.NextInt(int.MinValue, int.MaxValue));
+            spawnedEntity = parallelWriter.Instantiate(chunkIndex, spawnerComponent.targetEntity);
+            initTransform = new LocalTransform { Position = spawnerTransformComponent.Position, Rotation = spawnerTransformComponent.Rotation, Scale = spawnerComponent.isRandomSize ? randomDataComponent.Random.NextFloat(spawnerComponent.minSize, spawnerComponent.maxSize) : 1 };
+            parallelWriter.SetComponent(chunkIndex, spawnedEntity, initTransform);
+            ++spawnerComponent.spawnedCount;
+            //parallelWriter.SetName(chunkIndex, spawnedEntity, $"Steve{}");
 
-        Dependency = new TimerJob { deltaTime = dt }.ScheduleParallel(Dependency);
-        Dependency = new SpawnJob { ecb = ecb }.ScheduleParallel(Dependency);
-        Dependency.Complete();
-    }
+
+            //spawnerComponent.spawnedCount++;
+        }
+    }/*
+    [BurstCompile]
+    partial struct SpawnedEntityInitJob : IJobEntity
+    {
+        public EntityCommandBuffer.ParallelWriter parallelWriter;
+        public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, in AnimatorEntityRefComponent animatorEntityRef)
+        {
+            if(animatorEntityRef.boneIndexInAnimationRig == 1)
+                parallelWriter.SetComponent()
+        }
+    }*/
 }

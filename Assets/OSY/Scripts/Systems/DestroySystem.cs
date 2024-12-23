@@ -15,12 +15,13 @@ public partial struct DestroySystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        new TimeLimitedJob { parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(), time = SystemAPI.Time, gameManager = SystemAPI.GetSingleton<GameManagerSingletonComponent>() }.ScheduleParallel();
+        new LifeTimerJob { time = SystemAPI.Time }.ScheduleParallel(state.Dependency).Complete();
+
+        var gameManagerCache = SystemAPI.GetSingleton<GameManagerSingletonComponent>();
+        new TimeLimitedJob { parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(), dragingEntity = gameManagerCache.dragingEntityInfo.entity }.ScheduleParallel();
 
         var bodyPartLookup = SystemAPI.GetComponentLookup<BodyPartComponent>(true);
-        //NativeList<FixedString128Bytes> destroyNames = new NativeList<FixedString128Bytes>(Allocator.TempJob);
-        new TimeLimitedPlayerJob { BodyPartLookup = bodyPartLookup, /*destroyNames = destroyNames.AsParallelWriter(),*/ time = SystemAPI.Time, parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(), gameManager = SystemAPI.GetSingleton<GameManagerSingletonComponent>() }.ScheduleParallel();
-
+        new TimeLimitedPlayerJob { bodyPartLookup = bodyPartLookup, parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(), dragingEntity = gameManagerCache.dragingEntityInfo.entity }.ScheduleParallel();
 
         new DestroyJob { parallelWriter = SystemAPI.GetSingleton<BeginSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter() }.ScheduleParallel();
     }
@@ -35,37 +36,38 @@ public partial struct DestroySystem : ISystem
         }
     }
     [BurstCompile]
+    partial struct LifeTimerJob : IJobEntity
+    {
+        [ReadOnly] public TimeData time;
+        public void Execute(ref TimeLimitedLifeComponent timeLimitedLifeComponent)
+        {
+            timeLimitedLifeComponent.lifeTime -= time.DeltaTime;
+        }
+    }
+    [BurstCompile]
     [WithNone(typeof(PlayerComponent))]
     partial struct TimeLimitedJob : IJobEntity
     {
-        [ReadOnly] public TimeData time;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
-        [ReadOnly] public GameManagerSingletonComponent gameManager;
-        public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, ref TimeLimitedLifeComponent timeLimitedLifeComponent)
+        [ReadOnly] public Entity dragingEntity;
+        public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, in TimeLimitedLifeComponent timeLimitedLifeComponent)
         {
-            timeLimitedLifeComponent.lifeTime -= time.DeltaTime;
-            if (timeLimitedLifeComponent.lifeTime <= 0 && (gameManager.dragingEntityInfo.entity != entity))
+            if (timeLimitedLifeComponent.lifeTime <= 0 && (dragingEntity != entity))
                 parallelWriter.AddComponent(chunkIndex, entity, new DestroyMark());
         }
     }
     partial struct TimeLimitedPlayerJob : IJobEntity
     {
-        //public NativeList<FixedString128Bytes>.ParallelWriter destroyNames;
-        [ReadOnly] public TimeData time;
         public EntityCommandBuffer.ParallelWriter parallelWriter;
-        [ReadOnly] public GameManagerSingletonComponent gameManager;
-        [ReadOnly] public ComponentLookup<BodyPartComponent> BodyPartLookup;
+        [ReadOnly] public ComponentLookup<BodyPartComponent> bodyPartLookup;
+        [ReadOnly] public Entity dragingEntity;
         public void Execute([ChunkIndexInQuery] int chunkIndex, in Entity entity, ref TimeLimitedLifeComponent timeLimitedLifeComponent, in PlayerComponent playerComponent)
         {
-            //SteveConfig peepoConfig = default;
-            timeLimitedLifeComponent.lifeTime -= time.DeltaTime;
             if (timeLimitedLifeComponent.lifeTime <= 0)
             {
-                if (BodyPartLookup.HasComponent(gameManager.dragingEntityInfo.entity) && BodyPartLookup[gameManager.dragingEntityInfo.entity].ownerEntity == entity)
+                if (bodyPartLookup.HasComponent(dragingEntity) && (bodyPartLookup[dragingEntity].ownerEntity == entity))
                     return;
                 timeLimitedLifeComponent.lifeTime = 99;
-                //Debug.Log($"»èÁ¦: {peepoComponent.hashID}");
-                //GameManager.instance.viewerInfos[playerComponent.userName].OnDestroy(playerComponent.userName);
                 UniTask.RunOnThreadPool(async () =>
                 {
                     lock (GameManager.instance)
@@ -74,7 +76,6 @@ public partial struct DestroySystem : ISystem
                     GameManager.instance.UpdatePlayerCount();
                 }, true, GameManager.instance.destroyCancellationToken).Forget();
                 GameManager.instance.AddChat($"<color=yellow><b>{playerComponent.userName}</b> left the game</color>");
-                //destroyNames.AddNoResize(playerComponent.userName);
                 parallelWriter.AddComponent(chunkIndex, entity, new DestroyMark());
             }
         }

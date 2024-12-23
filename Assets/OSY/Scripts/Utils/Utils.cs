@@ -526,5 +526,49 @@ namespace OSY
             //Debug.Log(result);
             return result;
         }
+        public static unsafe float ToFloat(this FixedString64Bytes fixedString)
+        {
+            // FixedString의 Raw Data 접근
+            var utf8Bytes = fixedString.GetUnsafePtr();
+            int length = fixedString.Length;
+
+            float result = 0f;
+            bool isNegative = false;
+            bool isFractional = false;
+            float fractionalDivisor = 1f;
+
+            for (int i = 0; i < length; i++)
+            {
+                byte b = utf8Bytes[i];
+
+                if (b == '-') // 음수 처리
+                {
+                    isNegative = true;
+                }
+                else if (b == '.') // 소수점 처리
+                {
+                    isFractional = true;
+                }
+                else if (b >= '0' && b <= '9') // 숫자 처리
+                {
+                    if (isFractional)
+                    {
+                        fractionalDivisor *= 10f;
+                        result += (b - '0') / fractionalDivisor;
+                    }
+                    else
+                    {
+                        result = result * 10f + (b - '0');
+                    }
+                }
+                else
+                {
+                    Debug.LogError($"Invalid character in FixedString: {b}");
+                    return 0f; // 잘못된 값일 경우 0 반환
+                }
+            }
+
+            return isNegative ? -result : result;
+        }
     }
 }

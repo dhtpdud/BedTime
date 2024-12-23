@@ -454,4 +454,19 @@ public class GameManager : MonoBehaviour
     {
         ES3AutoSaveMgr.managers.Clear();
     }
+    public void OnApplicationQuit()
+    {
+        for (int i = 0; i < chatLineTrans.childCount; i++)
+        {
+            Destroy(chatLineTrans.GetChild(0).gameObject);
+        }
+        for (int i = 0; i < leaderBodardTrans.childCount; i++)
+        {
+            Destroy(leaderBodardTrans.GetChild(0).gameObject);
+        }
+        for (int i = 0; i < nameTagUICanvasTransform.childCount; i++)
+        {
+            Destroy(nameTagUICanvasTransform.GetChild(0).gameObject);
+        }
+    }
 }

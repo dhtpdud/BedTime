@@ -9,8 +9,6 @@ using UnityEngine;
 public sealed partial class GameManagerInfoSystem : SystemBase
 {
     public bool isReady;
-    public BlobAssetReference<PlayerConfig> peepoConfigRef;
-    public BlobAssetReference<DonationConfig> donationConfigRef;
     [BurstCompile]
     protected override void OnStartRunning()
     {
@@ -24,14 +22,12 @@ public sealed partial class GameManagerInfoSystem : SystemBase
         ref PlayerConfig peepoConfig = ref blobBuilder.ConstructRoot<PlayerConfig>();
         ref DonationConfig donationConfig = ref blobBuilder.ConstructRoot<DonationConfig>();
 
-        ref GameManagerSingletonComponent gameManagerRW = ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW;
+        var playerConfigRef = blobBuilder.CreateBlobAssetReference<PlayerConfig>(Allocator.Persistent);
+        var donationConfigRef = blobBuilder.CreateBlobAssetReference<DonationConfig>(Allocator.Persistent);
 
-        peepoConfigRef = blobBuilder.CreateBlobAssetReference<PlayerConfig>(Allocator.Persistent);
-        donationConfigRef = blobBuilder.CreateBlobAssetReference<DonationConfig>(Allocator.Persistent);
-
-        gameManagerRW.steveConfig = peepoConfigRef;
-        gameManagerRW.donationConfig = donationConfigRef;
-        gameManagerRW.playerSpawnPoint = GameManager.instance.playerSpawnTransform.position;
+        SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW.playerConfig = playerConfigRef;
+        SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW.donationConfig = donationConfigRef;
+        SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW.playerSpawnPoint = GameManager.instance.playerSpawnTransform.position;
         isReady = true;
 
         blobBuilder.Dispose();
@@ -48,8 +44,8 @@ public sealed partial class GameManagerInfoSystem : SystemBase
     public void UpdateSetting()
     {
         ref var gameManagerRW = ref SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW;
-        ref var peepoConfigRW = ref peepoConfigRef.Value;
-        ref var donationConfigRW = ref donationConfigRef.Value;
+        ref var playerConfigRW = ref gameManagerRW.playerConfig.Value;
+        ref var donationConfigRW = ref gameManagerRW.donationConfig.Value;
 
         gameManagerRW.stabilityPower = GameManager.instance.stabilityPower;
         gameManagerRW.dragPower = GameManager.instance.dragPower;
@@ -57,19 +53,19 @@ public sealed partial class GameManagerInfoSystem : SystemBase
         gameManagerRW.gravity = GameManager.instance.gravity;
         gameManagerRW.SpawnMinSpeed = GameManager.instance.SpawnMinSpeed;
         gameManagerRW.SpawnMaxSpeed = GameManager.instance.SpawnMaxSpeed;
-        peepoConfigRW.DefalutLifeTime = GameManager.instance.playerConfig.defalutLifeTime;
-        peepoConfigRW.MaxLifeTime = GameManager.instance.playerConfig.maxLifeTime;
-        peepoConfigRW.AddLifeTime = GameManager.instance.playerConfig.addLifeTime;
+        playerConfigRW.DefalutLifeTime = GameManager.instance.playerConfig.defalutLifeTime;
+        playerConfigRW.MaxLifeTime = GameManager.instance.playerConfig.maxLifeTime;
+        playerConfigRW.AddLifeTime = GameManager.instance.playerConfig.addLifeTime;
 
-        peepoConfigRW.DefaultSize = GameManager.instance.playerConfig.defaultSize;
-        peepoConfigRW.MaxSize = GameManager.instance.playerConfig.maxSize;
-        peepoConfigRW.MinSize = GameManager.instance.playerConfig.minSize;
-        peepoConfigRW.DefalutLifeTime = GameManager.instance.playerConfig.defalutLifeTime;
-        peepoConfigRW.MaxLifeTime = GameManager.instance.playerConfig.maxLifeTime;
-        peepoConfigRW.AddLifeTime = GameManager.instance.playerConfig.addLifeTime;
+        playerConfigRW.DefaultSize = GameManager.instance.playerConfig.defaultSize;
+        playerConfigRW.MaxSize = GameManager.instance.playerConfig.maxSize;
+        playerConfigRW.MinSize = GameManager.instance.playerConfig.minSize;
+        playerConfigRW.DefalutLifeTime = GameManager.instance.playerConfig.defalutLifeTime;
+        playerConfigRW.MaxLifeTime = GameManager.instance.playerConfig.maxLifeTime;
+        playerConfigRW.AddLifeTime = GameManager.instance.playerConfig.addLifeTime;
 
-        peepoConfigRW.switchIdleAnimationTime = GameManager.instance.playerConfig.switchIdleAnimationTime;
-        peepoConfigRW.switchTimeImpact = GameManager.instance.playerConfig.switchTimeImpact;
+        playerConfigRW.switchIdleAnimationTime = GameManager.instance.playerConfig.switchIdleAnimationTime;
+        playerConfigRW.switchTimeImpact = GameManager.instance.playerConfig.switchTimeImpact;
 
         donationConfigRW.objectCountFactor = GameManager.instance.donationConfig.objectCountFactor;
         donationConfigRW.objectLifeTime = GameManager.instance.donationConfig.objectLifeTime;
@@ -80,7 +76,7 @@ public sealed partial class GameManagerInfoSystem : SystemBase
     protected override void OnDestroy()
     {
         base.OnDestroy();
-        peepoConfigRef.Dispose();
-        donationConfigRef.Dispose();
+        SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW.playerConfig.Dispose();
+        SystemAPI.GetSingletonRW<GameManagerSingletonComponent>().ValueRW.donationConfig.Dispose();
     }
 }

@@ -149,10 +149,12 @@ public struct GameManagerSingletonComponent : IComponentData
     public float stabilityPower;
 
     public float physicMaxVelocity;
-    public BlobAssetReference<PlayerConfig> steveConfig;
+    public BlobAssetReference<PlayerConfig> playerConfig;
     public BlobAssetReference<DonationConfig> donationConfig;
 }
 public struct RandomDataComponent : IComponentData
 {
     public Random Random;
 }
+public struct SlimeTag : IComponentData
+{ }

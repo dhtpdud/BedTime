@@ -799,6 +799,7 @@ GameObject:
   - component: {fileID: 4701315317964493541}
   - component: {fileID: 858375806188829865}
   - component: {fileID: 7225884858303663141}
+  - component: {fileID: 6918063806207896043}
   m_Layer: 0
   m_Name: Bone_006
   m_TagString: Untagged
@@ -932,6 +933,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
   partType: 6
+--- !u!145 &6918063806207896043
+SpringJoint:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3812002050586507997}
+  serializedVersion: 3
+  m_ConnectedBody: {fileID: 0}
+  m_ConnectedArticulationBody: {fileID: 0}
+  m_Anchor: {x: 0, y: 0, z: 0}
+  m_Axis: {x: 1, y: 0, z: 0}
+  m_AutoConfigureConnectedAnchor: 0
+  m_ConnectedAnchor: {x: 0.2999994, y: 1.85, z: -0.0000001192093}
+  m_Spring: 10
+  m_Damper: 0.2
+  m_MinDistance: 0
+  m_MaxDistance: 0
+  m_Tolerance: 0.025
+  m_BreakForce: Infinity
+  m_BreakTorque: Infinity
+  m_EnableCollision: 0
+  m_EnablePreprocessing: 1
+  m_MassScale: 1
+  m_ConnectedMassScale: 1
 --- !u!1 &3860921118533903217
 GameObject:
   m_ObjectHideFlags: 0
@@ -1355,6 +1381,7 @@ GameObject:
   - component: {fileID: 5626969187626969059}
   - component: {fileID: 3540080018485038007}
   - component: {fileID: 850776104678098020}
+  - component: {fileID: 1479236734338240970}
   m_Layer: 0
   m_Name: Bone_013
   m_TagString: Untagged
@@ -1488,6 +1515,31 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   owner: {fileID: 2489450777866315502}
   partType: 4
+--- !u!145 &1479236734338240970
+SpringJoint:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6365432375973682313}
+  serializedVersion: 3
+  m_ConnectedBody: {fileID: 0}
+  m_ConnectedArticulationBody: {fileID: 0}
+  m_Anchor: {x: 0, y: 0, z: 0}
+  m_Axis: {x: 1, y: 0, z: 0}
+  m_AutoConfigureConnectedAnchor: 0
+  m_ConnectedAnchor: {x: -0.2999997, y: 1.85, z: -0.0000001192093}
+  m_Spring: 10
+  m_Damper: 0.2
+  m_MinDistance: 0
+  m_MaxDistance: 0
+  m_Tolerance: 0.025
+  m_BreakForce: Infinity
+  m_BreakTorque: Infinity
+  m_EnableCollision: 1
+  m_EnablePreprocessing: 1
+  m_MassScale: 1
+  m_ConnectedMassScale: 1
 --- !u!1 &6642051377167476953
 GameObject:
   m_ObjectHideFlags: 0

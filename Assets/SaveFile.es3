@@ -156,25 +156,32 @@
 								}
 							}:{
 								"name" : "Chzzk\n보노 보노",
-								"score" : "0",
+								"score" : "-100.00",
 								"subscribeMonth" : 0,
 								"profileImage" : {
-									"_ES3Ref" : "1918480469842244611"
+									"_ES3Ref" : "3846093614876255375"
 								},
 								"profileTexture" : null,
-								"nameTagObject" : null,
-								"nameTagTMP" : null,
-								"nameTagBackground" : null,
+								"nameTagObject" : {
+									"_ES3Ref" : "8968984622596270911"
+								},
+								"nameTagTMP" : {
+									"__type" : "TMPro.TextMeshPro,Unity.TextMeshPro",
+									"_ES3Ref" : "6306612296659386813"
+								},
+								"nameTagBackground" : {
+									"_ES3Ref" : "7923072716599951023"
+								},
 								"playerBoard" : {
-									"_ES3Ref" : "1955178694175300235"
+									"_ES3Ref" : "1946769459895361161"
 								},
 								"playerBoardTrans" : {
 									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "1731929655718065625"
+									"_ES3Ref" : "1786282892573164802"
 								},
 								"playerBoardTMP" : {
 									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "2639029106580101074"
+									"_ES3Ref" : "2631408223069534449"
 								},
 								"isEnable" : false,
 								"UpdateCTS" : {
@@ -329,31 +336,22 @@
 								"score" : "0",
 								"subscribeMonth" : 0,
 								"profileImage" : {
-									"_ES3Ref" : "6641057755646067234"
+									"_ES3Ref" : "3016763696708317034"
 								},
-								"profileTexture" : {
-									"_ES3Ref" : "4385998186401881226"
-								},
-								"nameTagObject" : {
-									"_ES3Ref" : "1175131895824586092"
-								},
-								"nameTagTMP" : {
-									"__type" : "TMPro.TextMeshPro,Unity.TextMeshPro",
-									"_ES3Ref" : "3177043720737558717"
-								},
-								"nameTagBackground" : {
-									"_ES3Ref" : "1244216212715575163"
-								},
+								"profileTexture" : null,
+								"nameTagObject" : null,
+								"nameTagTMP" : null,
+								"nameTagBackground" : null,
 								"playerBoard" : {
-									"_ES3Ref" : "6918589987709997555"
+									"_ES3Ref" : "1080543812497071286"
 								},
 								"playerBoardTrans" : {
 									"__type" : "UnityEngine.RectTransform,UnityEngine.CoreModule",
-									"_ES3Ref" : "747402452473308090"
+									"_ES3Ref" : "8609786926430709179"
 								},
 								"playerBoardTMP" : {
 									"__type" : "TMPro.TextMeshProUGUI,Unity.TextMeshPro",
-									"_ES3Ref" : "6139651792213363630"
+									"_ES3Ref" : "1892708673181085363"
 								},
 								"isEnable" : false,
 								"UpdateCTS" : {
