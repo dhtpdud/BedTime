@@ -76,7 +76,7 @@ public class StreamingEventManager : MonoBehaviour
                 await UniTask.SwitchToMainThread();
                 if (profile == null) //익명 후원
                 {
-                    SteveEventSystemHandle.OnChat.Invoke(null, chatText, 0, extra.payAmount);
+                    SteveEventSystemHandle.OnChat.Invoke(null, chatText, 0, extra.payAmount, false);
                     //new GameManager.ChatInfo(chatID, "<b><color=orange>" + chatText + "</color></b>", 10f, GameManager.instance.unknownDonationParentsTransform, true);
                     return;
                 }
@@ -117,7 +117,7 @@ public class StreamingEventManager : MonoBehaviour
 
                 addLifeTime = payAmount > 0 ? GameManager.instance.playerConfig.addLifeTime : 86400;
 
-                SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount);
+                SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount, false);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }
@@ -192,7 +192,7 @@ public class StreamingEventManager : MonoBehaviour
 
                 addLifeTime = payAmount > 0 ? GameManager.instance.playerConfig.addLifeTime : 86400;
 
-                SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount);
+                SteveEventSystemHandle.OnChat.Invoke(userNameComponent, chatText, addLifeTime, payAmount, false);
                 //GameManager.instance.viewerInfos[hash].chatBubbleObjects.transform.localScale = Vector3.one * GameManager.instance.chatBubbleSize;
             }
         }

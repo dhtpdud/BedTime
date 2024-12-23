@@ -84,7 +84,7 @@ public partial class PlayerEventSystem : SystemBase
 
     public Action<string> OnSpawn;
     //만약 string이 되면 hash를 string으로
-    public Action<string, string, float, int> OnChat;
+    public Action<string, string, float, int, bool> OnChat;
     public Action<int, int> OnSubscription;
     public Action<int> OnBan;
 
@@ -98,6 +98,7 @@ public partial class PlayerEventSystem : SystemBase
         CheckedStateRef.RequireForUpdate<GameManagerSingletonComponent>();
         adminNames.Add($"{PlatformNameCache.Chzzk}\n보노 보노");
         adminNames.Add($"{PlatformNameCache.YouTube}\nKamer");
+        adminNames.Add($"{PlatformNameCache.YouTube}\nVg");
     }
     protected override void OnStartRunning()
     {
@@ -130,6 +131,7 @@ public partial class PlayerEventSystem : SystemBase
             ecb.AddComponent(spawnedPlayerEntity, initLife);
 
             await UniTask.Yield();
+            await UniTask.Yield();
 
 
             NativeArray<Entity> playerEntityRef = new NativeArray<Entity>(1, Allocator.TempJob);
@@ -144,7 +146,7 @@ public partial class PlayerEventSystem : SystemBase
                     new PlayerNameTagJob { targetPlayerEntity = entity, userName = userName, parallelWriter = ecb.AsParallelWriter() }.ScheduleParallel(CheckedStateRef.Dependency).Complete();
             }*/
         };
-        OnChat = async (userNameString, text, addValueLife, payAmount) =>
+        OnChat = async (userNameString, text, addValueLife, payAmount, isLoop) =>
         {
             var loopCommands = this.loopCommands;
             var random = new Random((uint)UnityEngine.Random.Range(uint.MinValue, uint.MaxValue));
@@ -229,17 +231,23 @@ public partial class PlayerEventSystem : SystemBase
                 {
                     if (playerInfoRef.ValueRO.userName == userName)
                     {
-                        lifeRef.ValueRW.lifeTime = playerConfig.Value.DefalutLifeTime;
+                        if (!isLoop)
+                            lifeRef.ValueRW.lifeTime = playerConfig.Value.DefalutLifeTime;
                         isFoundPlayer = true;
                     }
                 }
                 if (!isFoundPlayer)
+                {
                     OnSpawn(userNameString);
-                GameManager.instance.viewerInfos[userName].UpdateNameTag().Forget();
+                    await UniTask.Yield();
+                    await UniTask.Yield();
+                }
+
+                if (!isLoop)
+                    GameManager.instance.viewerInfos[userName].UpdateNameTag().Forget();
                 GameManager.instance.viewerInfos[userName].UpdatePlayerBoard();
             }
 
-            await UniTask.Yield();
 
             try
             {
@@ -331,7 +339,7 @@ public partial class PlayerEventSystem : SystemBase
                                         for (int count = 0; maxCount == -1 || count < maxCount; count++)
                                         {
                                             if (loopCommandCTS.IsCancellationRequested) return;
-                                            OnChat(userNameString, targetCommands, addValueLife, payAmount);
+                                            OnChat(userNameString, targetCommands, addValueLife, 0, true);
                                             await UniTask.Delay(TimeSpan.FromSeconds(delay));
                                             if (loopCommandCTS.IsCancellationRequested) return;
                                         }
@@ -379,9 +387,10 @@ public partial class PlayerEventSystem : SystemBase
                                 break;
 
                             case stringReset:
+                                if (isUnkown) break;
                                 foreach (var (playerComponent, playerEntity) in SystemAPI.Query<RefRW<PlayerComponent>>().WithEntityAccess())
                                 {
-                                    if (playerComponent.ValueRO.userName != userName) return;
+                                    if (playerComponent.ValueRO.userName != userName) continue;
                                     playerComponent.ValueRW.score -= 10;
                                     if (playerComponent.ValueRO.score < -100)
                                     {
