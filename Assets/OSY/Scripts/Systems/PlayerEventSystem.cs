@@ -270,7 +270,7 @@ public partial class PlayerEventSystem : SystemBase
 
                             case stringDT:
                             case stringDanceTime:
-                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
+                                //if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
                                 if (danceCTS != null && !danceCTS.IsCancellationRequested)
                                 {
                                     danceCTS?.Cancel();
@@ -281,7 +281,7 @@ public partial class PlayerEventSystem : SystemBase
                                 await UniTask.Yield();
 
                                 float dtLimitSec = float.Parse(stringCommands[1]);
-                                dtLimitSec = (dtLimitSec <= -1 || dtLimitSec > 10) && !isAdmin ? 10 : dtLimitSec;
+                                //dtLimitSec = (dtLimitSec <= -1 || dtLimitSec > 10) && !isAdmin ? 10 : dtLimitSec;
 
                                 danceCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
 
@@ -408,7 +408,7 @@ public partial class PlayerEventSystem : SystemBase
                                 break;
                             case stringRA:
                             case stringResetAll:
-                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut /*|| isResettingAll*/) break;
+                                //if (!isAdmin /*&& payAmount <= 0 && subMonth <= subMouthCut*/ /*|| isResettingAll*/) break;
                                 isResettingAll = true;
                                 int batchCountRA = 0;
                                 float3 spawnPoint = GameManager.instance.playerSpawnTransform.position;
@@ -462,7 +462,7 @@ public partial class PlayerEventSystem : SystemBase
                                 break;
 
                             case stringCreeper:
-                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
+                                //if (!isAdmin /*&& payAmount <= 0 && subMonth <= subMouthCut*/) break;
                                 int spawnCount = 0;
                                 try
                                 {
@@ -496,7 +496,7 @@ public partial class PlayerEventSystem : SystemBase
                                 }
                                 break;
                             case stringGravity:
-                                if (!isAdmin && payAmount <= 0 && subMonth <= subMouthCut) break;
+                                //if (!isAdmin /*&& payAmount <= 0 && subMonth <= subMouthCut*/) break;
                                 if (gravityeCTS != null && !gravityeCTS.IsCancellationRequested)
                                 {
                                     gravityeCTS?.Cancel();
@@ -506,10 +506,9 @@ public partial class PlayerEventSystem : SystemBase
                                 await UniTask.Yield();
 
                                 float gLimitSec = float.Parse(stringCommands[1]);
-
+                                //gLimitSec = (gLimitSec <= -1 || gLimitSec > 60 * 3) && !isAdmin ? 60 * 3 : gLimitSec;
 
                                 float3 gravity = new float3(float.Parse(stringCommands[2]), float.Parse(stringCommands[3]), float.Parse(stringCommands[4]));
-                                gLimitSec = (gLimitSec <= -1 || gLimitSec > 60 * 3) && !isAdmin ? 60 * 3 : gLimitSec;
 
                                 gravityeCTS = CancellationTokenSource.CreateLinkedTokenSource(GameManager.instance.destroyCancellationToken);
 
