@@ -6,3 +6,8 @@
 2. 침대위를 가장 넓게 차지할 수록 높은 점수를 획득가능.
 ## 플레이 영상
 https://www.youtube.com/live/EADvi_gBM6o?si=eVceyVFJYzL1NBB7&t=11747
+## 종속성
+Unity 6000.0.39f1 (HDRP)  
+**Entities 1.3.10**  
+**Unity Physics 1.3.10**  
+Rukhanka Animation System 2.0.0
